@@ -107,7 +107,7 @@ $(OBJDIR)/%.c.o: $(SRCDIR)/%.c
 
 $(OBJDIR)/%.cpp.o: $(SRCDIR)/%.cpp
 	$(call qcmd,$(MKDIR) -p $(@D))
-	$(call bcmd,cc,$<,$(CXX) -c $(CXXLAGS) -o $@ $<)
+	$(call bcmd,cc,$<,$(CXX) -c $(CXXFLAGS) -o $@ $<)
 
 # Make object ressources
 
