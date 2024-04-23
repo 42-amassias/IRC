@@ -16,7 +16,7 @@
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
 # Default target
-all: all-minirt
+all: all-irc
 bonus: all
 
 # Include vars and msg module
@@ -84,14 +84,14 @@ cleandoc:
 # ---
 
 Makefile.cfg:
-	$(call emsg,Makefile.cfg missing did you "./configure")
+	$(call emsg,Makefile.cfg missing did you "./configure.sh")
 	@exit 1
 
 # ---
 # Build targets
 # ---
 
-all-minirt: $(LIBS_MAKE_RULE) $(BIN_PATH)
+all-irc: $(LIBS_MAKE_RULE) $(BIN_PATH)
 
 # Make the binary
 
