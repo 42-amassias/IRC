@@ -1,3 +1,5 @@
 ircserv
 build
 Makefile.cfg
+compile_flags.txt
+
