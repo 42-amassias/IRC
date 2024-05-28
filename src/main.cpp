@@ -11,6 +11,7 @@
 /* ************************************************************************** */
 
 #include "Server.hpp"
+#include "Log.hpp"
 
 #include <iostream>
 #include <vector>

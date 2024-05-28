@@ -62,7 +62,7 @@ Server::Server(void) :
 	{
 		this->createSocket();
 		this->bindSocket();
-		this->makeSocketListen();
+		this->listenSocket();
 		this->setupSignals();
 	}
 	catch(const InitializationFailureException& e)
@@ -107,7 +107,7 @@ void	Server::bindSocket(void)
 		throw InitializationFailureException("Could not un-block socket");
 }
 
-void	Server::makeSocketListen(void)
+void	Server::listenSocket(void)
 {
 	if (listen(m_socket_fd, Server::connection_request_queue_size))
 		throw InitializationFailureException("Cannot listen on server socket");

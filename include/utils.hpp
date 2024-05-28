@@ -29,7 +29,7 @@
 		public:																\
 			const char*	what(void) const throw()							\
 			{																\
-				return (#message);											\
+				return (message);											\
 			}																\
 	}
 
@@ -56,3 +56,4 @@
 	}
 
 #endif
+

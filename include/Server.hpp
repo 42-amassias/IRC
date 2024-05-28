@@ -38,7 +38,7 @@ class Server
 
 		void	createSocket(void);
 		void	bindSocket(void);
-		void	makeSocketListen(void);
+		void	listenSocket(void);
 		void	setupSignals(void);
 
 		void	initiateConnection(void);
@@ -63,3 +63,4 @@ class Server
 };
 
 #endif
+
