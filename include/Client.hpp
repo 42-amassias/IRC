@@ -1,23 +1,21 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   main.cpp                                           :+:      :+:    :+:   */
+/*   Client.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: amassias <amassias@student.42lehavre.fr    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2024/05/28 01:58:48 by amassias          #+#    #+#             */
-/*   Updated: 2024/05/28 03:33:55 by amassias         ###   ########.fr       */
+/*   Created: 2024/05/28 01:58:54 by amassias          #+#    #+#             */
+/*   Updated: 2024/05/28 01:58:55 by amassias         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "Server.hpp"
+#ifndef CLIENT_H
+# define CLIENT_H
 
-#include <iostream>
-#include <vector>
-
-int	main(void)
+class Client
 {
-	Server::getInstance()->loop();
-	Server::destroyInstance();
-	return (0);
-}
+	
+};
+
+#endif
