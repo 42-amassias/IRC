@@ -14,10 +14,13 @@
 #include "Log.hpp"
 
 #include <iostream>
-#include <vector>
 
 int	main(void)
 {
+	Log::Debug << "Starting server..." << 5432543 << std::endl;
+	Log::Info << "Starting server..." << std::endl;
+	Log::Warn << "Starting server..." << std::endl;
+	Log::Error << "Starting server..." << std::endl;
 	Server::getInstance()->loop();
 	Server::destroyInstance();
 	return (0);
