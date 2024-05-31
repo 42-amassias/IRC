@@ -13,8 +13,6 @@
 #ifndef UTILS_H
 # define UTILS_H
 
-# include <string>
-
 # define ITERATE(type, iterable, itr)										\
 	for (																	\
 		type::iterator itr = (iterable).begin();							\

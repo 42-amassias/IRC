@@ -20,6 +20,7 @@
 # include <vector>
 
 # define CONNECTION_REQUEST_QUEUE_SIZE 128
+# define DEFAULT_POLL_TIMEOUT (60 * 1000)
 
 class Server
 {
@@ -41,7 +42,7 @@ class Server
 		void	listenSocket(void);
 		void	setupSignals(void);
 
-		void	initiateConnection(void);
+		void	acceptConnection(void);
 
 	private:
 		static const uint16_t	default_port = 6969;
@@ -52,7 +53,7 @@ class Server
 	private:
 		int							m_socket_fd;
 		sockaddr_in					m_sock_addr;
-		std::vector<struct pollfd>	m_client_sockets;
+		std::vector<struct pollfd>	m_pollfds;
 		volatile bool				m_running;
 		struct sigaction			m_old_sigint_action;
 		struct sigaction			m_old_sigterm_action;
@@ -60,6 +61,7 @@ class Server
 
 	public:
 		CREATE_EXCEPTION_MESSAGE(InitializationFailure);
+		CREATE_EXCEPTION_MESSAGE(SocketFailure);
 };
 
 #endif

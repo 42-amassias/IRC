@@ -1,9 +1,8 @@
 template<typename T>
 std::ostream	&Log::LogStream::operator<<(T _in)
 {
-	(*this->m_out) << "[" << this->m_lvlcolor << this->m_lvlname << COLOR_SHELL_DEFAULT << "]"
+	return ((*this->m_out) << "[" << this->m_lvlcolor << this->m_lvlname << COLOR_SHELL_DEFAULT << "]"
 		<< "[" << Log::formattedDateTime() << "] "
-		<< _in;
-	return (*this->m_out);
+		<< _in);
 }
 

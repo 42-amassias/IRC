@@ -10,6 +10,7 @@
 /*                                                                            */
 /* ************************************************************************** */
 
+#include "Log.hpp"
 #include "Server.hpp"
 #include "utils.hpp"
 
@@ -19,6 +20,7 @@
 #include <poll.h>
 #include <sys/socket.h>
 #include <unistd.h>
+#include <errno.h>
 
 #include <iostream>
 
@@ -55,7 +57,7 @@ void	Server::stop(void)
 Server::Server(void) :
 	m_socket_fd(-1),
 	m_sock_addr(),
-	m_client_sockets(),
+	m_pollfds(),
 	m_running(false)
 {
 	try
@@ -72,11 +74,12 @@ Server::Server(void) :
 		throw e;
 	}
 	m_running = true;
+	Log::Info << "Server started successfully on " << std::endl;
 }
 
 Server::~Server(void)
 {
-	ITERATE(std::vector<struct pollfd>, m_client_sockets, itr)
+	ITERATE(std::vector<struct pollfd>, m_pollfds, itr)
 		close((*itr).fd);
 	close(m_socket_fd);
 	_setSigAction(SIGINT, &m_old_sigint_action, NULL);
@@ -86,31 +89,35 @@ Server::~Server(void)
 
 void	Server::createSocket(void)
 {
-	m_socket_fd = socket(AF_INET, SOCK_STREAM, 0);
+	const int	enable = 1;
+	const int	options = SO_REUSEADDR | SO_REUSEPORT;
+
+	m_socket_fd = socket(AF_INET, SOCK_STREAM, IPPROTO_IP);
 	if (m_socket_fd < 0)
 		throw InitializationFailureException("Could not create socket");
+	if (fcntl(m_socket_fd, F_SETFL, O_NONBLOCK))
+		throw InitializationFailureException("Could not un-block socket");
+	if (setsockopt(m_socket_fd, SOL_SOCKET, options, &enable, sizeof(enable)))
+		throw InitializationFailureException("Could not parameterize socket");
+	m_pollfds.push_back((struct pollfd){.fd = m_socket_fd, .events = POLLIN, .revents = 0});
+	Log::Debug << "Socket created successfully (fd = " << m_socket_fd << ")" << std::endl;
 }
 
 void	Server::bindSocket(void)
 {
-	const int	enable = 1;
-	const int	options = SO_REUSEADDR | SO_REUSEPORT;
-
-	if (setsockopt(m_socket_fd, SOL_SOCKET, options, &enable, sizeof(enable)))
-		throw InitializationFailureException("Could not parameterize socket");
 	m_sock_addr.sin_family = AF_INET;
 	m_sock_addr.sin_addr.s_addr = INADDR_ANY;
 	m_sock_addr.sin_port = htons(Server::default_port);
 	if (bind(m_socket_fd, (struct sockaddr *)&m_sock_addr, sizeof(m_sock_addr)))
 		throw InitializationFailureException("Could not bind socket");
-	if (fcntl(m_socket_fd, F_SETFL, O_NONBLOCK))
-		throw InitializationFailureException("Could not un-block socket");
+	Log::Debug << "Socket binded to port " << Server::default_port << std::endl;
 }
 
 void	Server::listenSocket(void)
 {
 	if (listen(m_socket_fd, Server::connection_request_queue_size))
 		throw InitializationFailureException("Cannot listen on server socket");
+	Log::Debug << "Socket is now listening" << std::endl;
 }
 
 void	Server::setupSignals(void)
@@ -125,34 +132,57 @@ void	Server::setupSignals(void)
 	_setSigAction(SIGQUIT, &action, &m_old_sigquit_action);
 }
 
-void	Server::initiateConnection(void)
+void	Server::acceptConnection(void)
 {
 	size_t			address_length;
-	int				connection;
+	int				fd;
 	char			host[INET_ADDRSTRLEN];
-	struct pollfd	pfd;
 
 	address_length = sizeof(sockaddr);
-	connection = accept(
+	fd = accept(
 		m_socket_fd,
 		(struct sockaddr *)&m_sock_addr,
 		(socklen_t *)&address_length
 		);
-	if (connection <= 0)
-		return ;
+	if (fd <= 0)
+		throw SocketFailureException("`accept()` failed on a socket");
 	inet_ntop(AF_INET, &m_sock_addr.sin_addr, host, INET_ADDRSTRLEN);
-	pfd.fd = connection;
-	pfd.events = POLLIN;
-	pfd.revents = 0;
-	m_client_sockets.push_back(pfd);
-	std::cout << "New connection(" << pfd.fd << ")" << std::endl;
+	m_pollfds.push_back((struct pollfd){.fd = fd, .events = POLLIN, .revents = 0});
+	Log::Info << "New connection (fd = " << fd << ")" << std::endl;
 }
 
 void	Server::loop(void)
 {
+	int							ret;
+	std::vector<struct pollfd>	pollfds_copy;
+
 	while (m_running)
 	{
-		this->initiateConnection();
+		ret = poll(m_pollfds.data(), m_pollfds.size(), DEFAULT_POLL_TIMEOUT);
+		if (ret < 0)
+		{
+			if (errno == EINTR)
+				continue ;
+			throw SocketFailureException("Unable to `poll()` the pollfds");
+		}
+		if (ret == 0)
+		{
+			Log::Warn << "`poll()` reached the timeout (" << DEFAULT_POLL_TIMEOUT / 1000 << "s)" << std::endl;
+			continue ;
+		}
+		pollfds_copy = m_pollfds;
+		ITERATE(std::vector<struct pollfd>, pollfds_copy, itr)
+		{
+			if (itr->revents == 0)
+				continue ;
+			if (itr->revents != POLLIN)
+				throw SocketFailureException("Incoherent revents on a pollfd");
+			if (itr->fd == m_socket_fd)
+			{
+				acceptConnection();
+				continue ;
+			}
+		}
 	}
 }
 

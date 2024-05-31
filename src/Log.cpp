@@ -8,8 +8,8 @@ namespace Log
 {
 	LogStream Debug("DEBUG", &std::cout, COLOR_SHELL_BLUE);
 	LogStream Info("INFO", &std::cout, COLOR_SHELL_GRAY);
-	LogStream Warn("WARN", &std::cout, COLOR_SHELL_YELLOW);
-	LogStream Error("ERROR", &std::cout, COLOR_SHELL_RED);
+	LogStream Warn("WARN", &std::cerr, COLOR_SHELL_YELLOW);
+	LogStream Error("ERROR", &std::cerr, COLOR_SHELL_RED);
 	
 	LogStream::LogStream(
 			std::string const& lvlname,

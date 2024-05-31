@@ -13,15 +13,18 @@
 #include "Server.hpp"
 #include "Log.hpp"
 
-#include <iostream>
+#include <cstring>
 
 int	main(void)
 {
-	Log::Debug << "Starting server..." << 5432543 << std::endl;
-	Log::Info << "Starting server..." << std::endl;
-	Log::Warn << "Starting server..." << std::endl;
-	Log::Error << "Starting server..." << std::endl;
-	Server::getInstance()->loop();
-	Server::destroyInstance();
+	try
+	{
+		Server::getInstance()->loop();
+		Server::destroyInstance();
+	} catch (std::exception &e)
+	{
+		Log::Error << "Server encountered a fatal error : " << e.what() << std::endl;
+
+	}
 	return (0);
 }
