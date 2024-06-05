@@ -14,13 +14,14 @@
 # define CLIENT_H
 
 # include <string>
+# include <sys/socket.h>
 
 # include "utils.hpp"
 
 class Client
 {
 	public:
-		Client();
+		Client(struct sockaddr address);
 		~Client();
 
 		std::string	getNickname() const;
@@ -34,14 +35,18 @@ class Client
 		void		receive(int fd);
 
 	private:
-		std::string	m_nickname;
-		std::string	m_username;
-		std::string	m_realname;
-		bool		m_logged;
+		Client();
+
+	private:
+		std::string		m_nickname;
+		std::string		m_username;
+		std::string		m_realname;
+		bool			m_logged;
+		struct sockaddr	m_addr;
 
 	public:
 		
-		CREATE_EXCEPTION(ConnexionLost, "Connexion lost");
+		CREATE_EXCEPTION(ConnectionLost, "Connection lost");
 		CREATE_EXCEPTION(ReadError, "Read error");
 };
 

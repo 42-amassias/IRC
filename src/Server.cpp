@@ -122,21 +122,28 @@ void	Server::setupSignals(void)
 
 void	Server::acceptConnection(void)
 {
-	size_t			address_length;
+	size_t			addr_len;
 	int				fd;
-	char			host[INET_ADDRSTRLEN];
+	struct sockaddr	addr;
+	Client			*c;
 
-	address_length = sizeof(sockaddr);
-	fd = accept(
-		m_socket_fd,
-		(struct sockaddr *)&m_sock_addr,
-		(socklen_t *)&address_length
-		);
-	if (fd <= 0)
-		throw SocketFailureException("`accept()` failed on a socket");
-	inet_ntop(AF_INET, &m_sock_addr.sin_addr, host, INET_ADDRSTRLEN);
-	m_pollfds.push_back((struct pollfd){.fd = fd, .events = POLLIN, .revents = 0});
-	Log::Info << "New connection (fd = " << fd << ")" << std::endl;
+	addr_len = sizeof(sockaddr);
+	while (true)
+	{
+		fd = accept(
+				m_socket_fd,
+				(struct sockaddr *)&addr,
+				(socklen_t *)&addr_len
+				);
+		if (fd < 0 && errno == EWOULDBLOCK)
+			break ;
+		if (fd < 0)
+			throw SocketFailureException("`accept()` failed on a socket");
+		Log::Info << "New connection (fd = " << fd << ")" << std::endl;
+		m_pollfds.push_back((struct pollfd){.fd = fd, .events = POLLIN, .revents = 0});
+		c = new Client(addr);
+		m_clients.insert(std::make_pair(fd, c));
+	}
 }
 
 void	Server::init(void)
@@ -178,16 +185,33 @@ void	Server::loop(void)
 			continue ;
 		}
 		pollfds_copy = m_pollfds;
-		ITERATE(std::vector<struct pollfd>, pollfds_copy, itr)
+		ITERATE(std::vector<struct pollfd>, pollfds_copy, it)
 		{
-			if (itr->revents == 0)
+			if (it->revents == 0)
 				continue ;
-			if ((itr->revents & POLLIN) == 0) // WTF dude ?
+			if ((it->revents & POLLIN) == 0) // WTF dude ?
 				throw SocketFailureException("Incoherent revents on a pollfd");
-			if (itr->fd == m_socket_fd) // Server event
+			if (it->fd == m_socket_fd) // Server event
 				acceptConnection();
 			else // Client event
 			{
+				Client	*c = m_clients.at(it->fd);
+				try
+				{
+					c->receive(it->fd);
+				}
+				catch (const Client::ConnectionLostException& e)
+				{
+					Log::Info << "Connection lost with : " << it->fd << std::endl;
+					delete c;
+					m_clients.erase(it->fd);
+					for (std::vector<struct pollfd>::iterator _it = (m_pollfds).begin();
+							_it != (m_pollfds).end();)
+						if (_it->fd == it->fd)
+							_it = m_pollfds.erase(_it);
+						else
+							++_it;
+				}
 			}
 		}
 	}
