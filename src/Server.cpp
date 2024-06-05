@@ -56,25 +56,13 @@ void	Server::stop(void)
 
 Server::Server(void) :
 	m_socket_fd(-1),
+	m_port(default_port),
 	m_sock_addr(),
+	m_pwd(""),
 	m_pollfds(),
+	m_clients(),
 	m_running(false)
 {
-	try
-	{
-		this->createSocket();
-		this->bindSocket();
-		this->listenSocket();
-		this->setupSignals();
-	}
-	catch(const InitializationFailureException& e)
-	{
-		if (m_socket_fd >= 0)
-			close(m_socket_fd);
-		throw e;
-	}
-	m_running = true;
-	Log::Info << "Server started successfully on " << std::endl;
 }
 
 Server::~Server(void)
@@ -107,10 +95,10 @@ void	Server::bindSocket(void)
 {
 	m_sock_addr.sin_family = AF_INET;
 	m_sock_addr.sin_addr.s_addr = INADDR_ANY;
-	m_sock_addr.sin_port = htons(Server::default_port);
+	m_sock_addr.sin_port = htons(m_port);
 	if (bind(m_socket_fd, (struct sockaddr *)&m_sock_addr, sizeof(m_sock_addr)))
 		throw InitializationFailureException("Could not bind socket");
-	Log::Debug << "Socket binded to port " << Server::default_port << std::endl;
+	Log::Debug << "Socket binded to port " << m_port << std::endl;
 }
 
 void	Server::listenSocket(void)
@@ -151,6 +139,25 @@ void	Server::acceptConnection(void)
 	Log::Info << "New connection (fd = " << fd << ")" << std::endl;
 }
 
+void	Server::init(void)
+{
+	try
+	{
+		this->createSocket();
+		this->bindSocket();
+		this->listenSocket();
+		this->setupSignals();
+	}
+	catch(const std::exception& e)
+	{
+		if (m_socket_fd >= 0)
+			close(m_socket_fd);
+		throw ;
+	}
+	m_running = true;
+	Log::Info << "Server started successfully on " << std::endl;
+}
+
 void	Server::loop(void)
 {
 	int							ret;
@@ -175,15 +182,37 @@ void	Server::loop(void)
 		{
 			if (itr->revents == 0)
 				continue ;
-			if (itr->revents != POLLIN)
+			if ((itr->revents & POLLIN) == 0) // WTF dude ?
 				throw SocketFailureException("Incoherent revents on a pollfd");
-			if (itr->fd == m_socket_fd)
-			{
+			if (itr->fd == m_socket_fd) // Server event
 				acceptConnection();
-				continue ;
+			else // Client event
+			{
 			}
 		}
 	}
+}
+
+bool	Server::checkPwd(std::string const& pwd) const
+{
+	return (pwd == m_pwd);
+}
+
+void	Server::setPwd(std::string const &pwd)
+{
+	Log::Info << "Password set to : \"" << pwd << "\"" << std::endl;
+	m_pwd = pwd;
+}
+
+void	Server::setPort(int port)
+{
+	Log::Info << "Port set to : " << port << std::endl;
+	m_port = port;
+}
+
+int	Server::getPort(void) const
+{
+	return (m_port);
 }
 
 static void _handleSignal(

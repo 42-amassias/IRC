@@ -13,11 +13,14 @@
 #ifndef SERVER_H
 # define SERVER_H
 
-# include "utils.hpp"
-
 # include <netinet/in.h>
 # include <signal.h>
 # include <vector>
+# include <map>
+
+# include "Client.hpp"
+
+# include "utils.hpp"
 
 # define CONNECTION_REQUEST_QUEUE_SIZE 128
 # define DEFAULT_POLL_TIMEOUT (60 * 1000)
@@ -30,9 +33,15 @@ class Server
 		static Server*	getInstance(void);
 		static void		destroyInstance(void);
 
+		void	init(void);
 		void	loop(void);
 		void	stop(void);
 
+		bool	checkPwd(std::string const &pwd) const;
+		void	setPwd(std::string const &pwd);
+
+		void	setPort(int port);
+		int		getPort(void) const;
 
 	private:
 		Server(void);
@@ -52,8 +61,11 @@ class Server
 	
 	private:
 		int							m_socket_fd;
+		int							m_port;
 		sockaddr_in					m_sock_addr;
+		std::string					m_pwd;
 		std::vector<struct pollfd>	m_pollfds;
+		std::map<int, Client *>		m_clients;
 		volatile bool				m_running;
 		struct sigaction			m_old_sigint_action;
 		struct sigaction			m_old_sigterm_action;
