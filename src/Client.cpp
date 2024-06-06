@@ -15,9 +15,14 @@ Client::Client(struct sockaddr const& addr) :
 		<< ipv4FromSockaddr(m_addr) << ":" << ntohs(((struct sockaddr_in *)&m_addr)->sin_port) << std::endl;
 }
 
-Client::Client(void) : m_logged(false) {}
+Client::Client(void) :
+	m_logged(false)
+{
+}
 
-Client::~Client(void) {}
+Client::~Client(void)
+{
+}
 
 std::string const&	Client::getNickname(void) const
 {
@@ -79,10 +84,16 @@ void	Client::execPendingCommands(void)
 		try
 		{
 			Command c = m_buffer.popFront();
+			if (false)
+				m_logged = true;
 		}
 		catch (CommandBuffer::NoPendingCommandException const& e)
 		{
 			break ;
+		}
+		catch (std::runtime_error const& e)
+		{
+			Log::Error << e.what() << std::endl;
 		}
 	}
 }

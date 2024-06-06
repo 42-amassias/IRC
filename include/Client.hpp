@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: Antoine Massias <massias.antoine.pro@gm    +#+  +:+       +#+        */
+/*   By: amassias <amassias@student.42lehavre.fr    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/28 01:58:54 by amassias          #+#    #+#             */
-/*   Updated: 2024/06/06 08:03:21 by Antoine Mas      ###   ########.fr       */
+/*   Updated: 2024/06/06 09:44:16 by amassias         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 

@@ -23,4 +23,3 @@ class Command
 };
 
 #endif
-
