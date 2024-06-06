@@ -51,7 +51,8 @@ class Server
 		void	listenSocket(void);
 		void	setupSignals(void);
 
-		void	acceptConnection(void);
+		void	acceptConnections(void);
+		void	removeConnection(int fd);
 
 	private:
 		static const uint16_t	default_port = 6969;

@@ -69,7 +69,6 @@ Server::~Server(void)
 {
 	ITERATE(std::vector<struct pollfd>, m_pollfds, itr)
 		close((*itr).fd);
-	close(m_socket_fd);
 	_setSigAction(SIGINT, &m_old_sigint_action, NULL);
 	_setSigAction(SIGTERM, &m_old_sigterm_action, NULL);
 	_setSigAction(SIGQUIT, &m_old_sigquit_action, NULL);
@@ -120,7 +119,7 @@ void	Server::setupSignals(void)
 	_setSigAction(SIGQUIT, &action, &m_old_sigquit_action);
 }
 
-void	Server::acceptConnection(void)
+void	Server::acceptConnections(void)
 {
 	size_t			addr_len;
 	int				fd;
@@ -139,11 +138,27 @@ void	Server::acceptConnection(void)
 			break ;
 		if (fd < 0)
 			throw SocketFailureException("`accept()` failed on a socket");
-		Log::Info << "New connection (fd = " << fd << ")" << std::endl;
+		if (fcntl(fd, F_SETFL, O_NONBLOCK))
+			throw InitializationFailureException("Could not un-block socket");
 		m_pollfds.push_back((struct pollfd){.fd = fd, .events = POLLIN, .revents = 0});
 		c = new Client(addr);
 		m_clients.insert(std::make_pair(fd, c));
 	}
+}
+
+void	Server::removeConnection(int fd)
+{
+	Client	*c = m_clients.at(fd);
+
+	delete c;
+	close(fd);
+	m_clients.erase(fd);
+	for (std::vector<struct pollfd>::iterator _it = (m_pollfds).begin();
+			_it != (m_pollfds).end();)
+		if (_it->fd == fd)
+			_it = m_pollfds.erase(_it);
+		else
+			++_it;
 }
 
 void	Server::init(void)
@@ -162,7 +177,8 @@ void	Server::init(void)
 		throw ;
 	}
 	m_running = true;
-	Log::Info << "Server started successfully on " << std::endl;
+	Log::Info << "Server started successfully on "
+		<< ipv4FromSockaddr(m_sock_addr) << ":" << ntohs(m_sock_addr.sin_port) << std::endl;
 }
 
 void	Server::loop(void)
@@ -192,25 +208,26 @@ void	Server::loop(void)
 			if ((it->revents & POLLIN) == 0) // WTF dude ?
 				throw SocketFailureException("Incoherent revents on a pollfd");
 			if (it->fd == m_socket_fd) // Server event
-				acceptConnection();
+				acceptConnections();
 			else // Client event
 			{
 				Client	*c = m_clients.at(it->fd);
 				try
 				{
 					c->receive(it->fd);
+					c->execPendingCommands();
 				}
-				catch (const Client::ConnectionLostException& e)
+				catch (Client::ConnectionLostException const& e)
 				{
-					Log::Info << "Connection lost with : " << it->fd << std::endl;
-					delete c;
-					m_clients.erase(it->fd);
-					for (std::vector<struct pollfd>::iterator _it = (m_pollfds).begin();
-							_it != (m_pollfds).end();)
-						if (_it->fd == it->fd)
-							_it = m_pollfds.erase(_it);
-						else
-							++_it;
+					c->execPendingCommands();
+					Log::Info << ipv4FromSockaddr(c->getSockaddr()) << " disconnected" << std::endl;
+					removeConnection(it->fd);
+				}
+				catch (Client::ReadErrorException const& e)
+				{
+					Log::Warn << "Connection lost due to error with "
+						<< ipv4FromSockaddr(c->getSockaddr()) << ": " << e.what() << std::endl;
+					removeConnection(it->fd);
 				}
 			}
 		}
@@ -244,6 +261,7 @@ static void _handleSignal(
 				)
 {
 	(void)signal;
+	Log::Debug << "SIGNAL RECEIVED : " << signal << std::endl;
 	Server::getInstance()->stop();
 }
 

@@ -13,6 +13,7 @@
 #ifndef UTILS_H
 # define UTILS_H
 
+# include <arpa/inet.h>
 # include <string>
 
 # define ITERATE(type, iterable, itr)										\
@@ -54,6 +55,9 @@
 		private:															\
 			std::string const	m_message;									\
 	}
+
+std::string	ipv4FromSockaddr(struct sockaddr const& addr);
+std::string	ipv4FromSockaddr(struct sockaddr_in const& addr);
 
 #endif
 
