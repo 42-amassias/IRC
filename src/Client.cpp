@@ -15,28 +15,28 @@ Client::Client(struct sockaddr const& addr) :
 		<< ipv4FromSockaddr(m_addr) << ":" << ntohs(((struct sockaddr_in *)&m_addr)->sin_port) << std::endl;
 }
 
-Client::Client() : m_logged(false) {}
+Client::Client(void) : m_logged(false) {}
 
-Client::~Client() {}
+Client::~Client(void) {}
 
-std::string	Client::getNickname() const
+std::string const&	Client::getNickname(void) const
 {
-	return m_nickname;
+	return (m_nickname);
 }
 
-std::string	Client::getUsername() const
+std::string const&	Client::getUsername(void) const
 {
-	return m_username;
+	return (m_username);
 }
 
-std::string	Client::getRealname() const
+std::string const&	Client::getRealname(void) const
 {
-	return m_realname;
+	return (m_realname);
 }
 
-struct sockaddr	Client::getSockaddr() const
+struct sockaddr const&	Client::getSockaddr(void) const
 {
-	return m_addr;
+	return (m_addr);
 }
 
 void	Client::setNickname(std::string const& s)
@@ -72,9 +72,10 @@ void	Client::receive(int fd)
 	}
 }
 
-void	Client::execPendingCommands()
+void	Client::execPendingCommands(void)
 {
 	Command	c;
+
 	while (true)
 	{
 		try

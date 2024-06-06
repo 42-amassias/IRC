@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: amassias <amassias@student.42lehavre.fr    +#+  +:+       +#+        */
+/*   By: Antoine Massias <massias.antoine.pro@gm    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/28 01:58:54 by amassias          #+#    #+#             */
-/*   Updated: 2024/05/28 01:58:55 by amassias         ###   ########.fr       */
+/*   Updated: 2024/06/06 08:03:21 by Antoine Mas      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,22 +24,22 @@ class Client
 {
 	public:
 		Client(struct sockaddr const& address);
-		~Client();
+		~Client(void);
 
-		std::string	getNickname() const;
-		std::string	getUsername() const;
-		std::string	getRealname() const;
-		struct sockaddr	getSockaddr() const;
+		std::string const&	getNickname() const;
+		std::string const&	getUsername() const;
+		std::string const&	getRealname() const;
+		struct sockaddr const&	getSockaddr() const;
 
 		void		setNickname(std::string const& s);
 		void		setUsername(std::string const& s);
 		void		setRealname(std::string const& s);
 
 		void		receive(int fd);
-		void		execPendingCommands();
+		void		execPendingCommands(void);
 
 	private:
-		Client();
+		Client(void);
 
 	private:
 		std::string		m_nickname;
