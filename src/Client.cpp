@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   Client.cpp                                         :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: ale-boud <ale-boud@student.42lehavre.fr>   +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2024/06/06 14:16:08 by ale-boud          #+#    #+#             */
+/*   Updated: 2024/06/06 14:16:11 by ale-boud         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include <cerrno>
 #include <cstring>
 
@@ -91,9 +103,9 @@ void	Client::execPendingCommands(void)
 		{
 			break ;
 		}
-		catch (std::runtime_error const& e)
+		catch (Command::InvalidCommandException const& e)
 		{
-			Log::Error << e.what() << std::endl;
+			Log::Warn << "Invalid command received: " << e.what() << std::endl;
 		}
 	}
 }

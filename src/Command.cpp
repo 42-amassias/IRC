@@ -1,8 +1,16 @@
-#include "Log.hpp"
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   Command.cpp                                        :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: ale-boud <ale-boud@student.42lehavre.fr>   +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2024/06/06 15:10:43 by ale-boud          #+#    #+#             */
+/*   Updated: 2024/06/06 15:11:52 by ale-boud         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
 
 #include "Command.hpp"
-
-#include <stdexcept>
 
 static
 void	_skip_spaces(
@@ -54,7 +62,6 @@ Command::Command(std::vector<char> const& raw_command) :
 	m_command(""),
 	m_parameters()
 {
-	Log::Debug << "Creating command object for: \"" + std::string(raw_command.begin(), raw_command.end()) << "\"" << std::endl;
 	try
 	{
 		std::vector<char>::const_iterator	itr(raw_command.begin());
@@ -62,19 +69,18 @@ Command::Command(std::vector<char> const& raw_command) :
 
 		m_prefix = _extract_prefix(itr, end);
 		if (itr == end)
-			throw std::runtime_error("Missing command");
+			throw Command::InvalidCommandException("Missing command");
 		m_command = _extract_command(itr, end);
+		if (itr == end || *itr != ' ')
+			throw Command::InvalidCommandException("Missing space before params");
 		_extract_params(itr, end, m_parameters);
-		if (itr == end || *itr != '\r')
-			throw std::runtime_error("Missing `CR`");
-		// No need to check for LF because `CommandBuffer` already discards it.
-		if (++itr != end)
-			throw std::runtime_error("Too much dada");
+		if (itr != end)
+			throw Command::InvalidCommandException("Too much dada");
 	}
-	catch (std::runtime_error const& e)
+	catch (Command::InvalidCommandException const& e)
 	{
-		Log::Error << "Parsing error: " << e.what() << std::endl;
-		throw std::runtime_error("Invalid command: " + std::string(raw_command.data()));
+		throw Command::InvalidCommandException(std::string(e.what())
+				+ " (\"" + std::string(raw_command.begin(), raw_command.end()) + "\")");
 	}
 }
 
@@ -99,7 +105,7 @@ void	_skip_spaces(
 			)
 {
 	if (itr == end || *itr != ' ')
-		throw std::runtime_error("Missing white space");
+		throw Command::InvalidCommandException("Missing white space");
 	++itr;
 	while (itr != end && *itr == ' ')
 		++itr;
@@ -131,20 +137,20 @@ std::string	_extract_prefix(
 		return (prefix);
 	word = _extract_word(++itr, end);
 	if (word.empty() || itr == end)
-		throw std::runtime_error("Invalid prefix");
+		throw Command::InvalidCommandException("Invalid prefix");
 	prefix += word;
 	if (*itr == '!')
 	{
 		word = _extract_word(++itr, end);
 		if (word.empty() || itr == end)
-			throw std::runtime_error("Invalid username");
+			throw Command::InvalidCommandException("Invalid username");
 		prefix += '!' + word;
 	}
 	if (*itr == '@')
 	{
 		word = _extract_word(++itr, end);
 		if (word.empty() || itr == end)
-			throw std::runtime_error("Invalid host");
+			throw Command::InvalidCommandException("Invalid host");
 		prefix += '@' + word;
 	}
 	_skip_spaces(itr, end);
@@ -161,6 +167,8 @@ std::string	_extract_command(
 
 	if (!std::isdigit(*itr))
 	{
+		if (*itr == ' ')
+			throw Command::InvalidCommandException("Unexcepted spaces before command");
 		while (itr != end && std::isalpha(*itr))
 			command += *itr++;
 		return (command);
@@ -168,7 +176,7 @@ std::string	_extract_command(
 	for (size_t i = 0; i < 3; i++)
 	{
 		if (itr == end || !std::isdigit(*itr))
-			throw std::runtime_error("Invalid command (ID)");
+			throw Command::InvalidCommandException("Invalid command (ID)");
 		command += *itr++;
 	}
 	return (command);
@@ -187,7 +195,7 @@ void	_extract_params(
 		return ;
 	_skip_spaces(itr, end);
 	if (itr == end)
-		throw std::runtime_error("Params: missing data");
+		throw Command::InvalidCommandException("Params: missing data");
 	if (*itr == ':')
 	{
 		++itr;

@@ -6,7 +6,7 @@
 /*   By: amassias <amassias@student.42lehavre.fr    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/28 01:58:44 by amassias          #+#    #+#             */
-/*   Updated: 2024/05/28 03:41:58 by amassias         ###   ########.fr       */
+/*   Updated: 2024/06/06 15:10:57 by ale-boud         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -67,8 +67,13 @@ Server::Server(void) :
 
 Server::~Server(void)
 {
-	ITERATE(std::vector<struct pollfd>, m_pollfds, itr)
-		close((*itr).fd);
+	close(m_socket_fd);
+	for (std::map<int, Client *>::iterator it = (m_clients).begin();
+			it != (m_clients).end(); ++it)
+	{
+		close(it->first);
+		delete(it->second);
+	}
 	_setSigAction(SIGINT, &m_old_sigint_action, NULL);
 	_setSigAction(SIGTERM, &m_old_sigterm_action, NULL);
 	_setSigAction(SIGQUIT, &m_old_sigquit_action, NULL);

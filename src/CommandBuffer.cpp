@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   CommandBuffer.cpp                                  :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: ale-boud <ale-boud@student.42lehavre.fr>   +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2024/06/06 15:10:48 by ale-boud          #+#    #+#             */
+/*   Updated: 2024/06/06 15:10:51 by ale-boud         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include <algorithm>
 
 #include "CommandBuffer.hpp"
@@ -21,6 +33,9 @@ Command	CommandBuffer::popFront(void)
 		throw NoPendingCommandException();
 	std::vector<char>	raw_command(m_buffer.begin(), nl_it);
 	m_buffer.erase(m_buffer.begin(), nl_it + 1);
+	if (raw_command.size() == 0 || raw_command.back() != '\r')
+		throw Command::InvalidCommandException("No CR in command");
+	raw_command.pop_back();
 	return (Command(raw_command));
 }
 
