@@ -100,11 +100,13 @@ void	Client::receive(int fd)
 
 void	Client::execPendingCommands(void)
 {
+	Command	c;
+
 	while (true)
 	{
 		try
 		{
-			Command c = m_buffer.popFront();
+			c = m_buffer.popFront();
 			(this->*command_function_map.at(c.getCommand()))(c);
 		}
 		catch (CommandBuffer::NoPendingCommandException const& e)
@@ -114,6 +116,10 @@ void	Client::execPendingCommands(void)
 		catch (Command::InvalidCommandException const& e)
 		{
 			Log::Warn << "Invalid command received: " << e.what() << std::endl;
+		}
+		catch (std::out_of_range const& e)
+		{
+			Log::Warn << "Unknown command : " << c.getCommand() << std::endl;
 		}
 	}
 }

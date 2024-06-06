@@ -23,6 +23,7 @@ class Command
 	public:
 		Command(Command const& o);
 		Command(std::vector<char> const& raw_command);
+		Command(void);
 		~Command();
 
 		Command&	operator=(Command const& o);
@@ -32,7 +33,6 @@ class Command
 		std::vector<std::string> const&	getParameters() const;
 	
 	private:
-		Command(void);
 
 	private:
 		std::string					m_prefix;
