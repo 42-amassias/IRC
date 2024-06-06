@@ -74,13 +74,11 @@ void	Client::receive(int fd)
 
 void	Client::execPendingCommands(void)
 {
-	Command	c;
-
 	while (true)
 	{
 		try
 		{
-			c = m_buffer.popFront();
+			Command c = m_buffer.popFront();
 		}
 		catch (CommandBuffer::NoPendingCommandException const& e)
 		{

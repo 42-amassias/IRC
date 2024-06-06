@@ -7,9 +7,14 @@
 class Command
 {
 	public:
-		Command();
+		Command(Command const& o);
 		Command(std::vector<char> const& raw_command);
-		~Command();
+		~Command(void);
+
+		Command&	operator=(Command const& o);
+	
+	private:
+		Command(void);
 
 	private:
 		std::string					m_prefix;
