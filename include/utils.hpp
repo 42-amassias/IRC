@@ -16,6 +16,13 @@
 # include <arpa/inet.h>
 # include <string>
 
+# define ITERATE_CONST(type, iterable, itr)									\
+	for (																	\
+		type::const_iterator itr = (iterable).begin();						\
+		itr != (iterable).end();											\
+		++itr																\
+	)
+
 # define ITERATE(type, iterable, itr)										\
 	for (																	\
 		type::iterator itr = (iterable).begin();							\

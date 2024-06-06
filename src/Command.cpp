@@ -6,7 +6,7 @@
 /*   By: ale-boud <ale-boud@student.42lehavre.fr>   +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/06 15:10:43 by ale-boud          #+#    #+#             */
-/*   Updated: 2024/06/06 15:11:52 by ale-boud         ###   ########.fr       */
+/*   Updated: 2024/06/06 15:42:05 by ale-boud         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -209,3 +209,19 @@ void	_extract_params(
 	params.push_back(param);
 	_extract_params(itr, end, params);
 }
+
+std::string const&				Command::getPrefix() const
+{
+	return m_prefix;
+}
+
+std::string const&				Command::getCommand() const
+{
+	return m_command;
+}
+
+std::vector<std::string> const&	Command::getParameters() const
+{
+	return m_parameters;
+}
+

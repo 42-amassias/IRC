@@ -6,7 +6,7 @@
 /*   By: ale-boud <ale-boud@student.42lehavre.fr>   +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/06 14:16:08 by ale-boud          #+#    #+#             */
-/*   Updated: 2024/06/06 14:16:11 by ale-boud         ###   ########.fr       */
+/*   Updated: 2024/06/06 15:42:05 by ale-boud         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,6 +15,15 @@
 
 #include "Log.hpp"
 #include "Client.hpp"
+
+const std::pair<std::string, void (Client::*)(Command const&)>
+Client::_command_function_map[] = {
+	std::make_pair("PRIVMSG", &Client::execPRIVMSG),
+};
+
+const std::map<std::string, void (Client::*)(Command const&)>
+Client::command_function_map(_command_function_map,
+		_command_function_map + sizeof(_command_function_map) / sizeof(*_command_function_map));
 
 Client::Client(struct sockaddr const& addr) :
 	m_nickname(),
@@ -96,8 +105,7 @@ void	Client::execPendingCommands(void)
 		try
 		{
 			Command c = m_buffer.popFront();
-			if (false)
-				m_logged = true;
+			(this->*command_function_map.at(c.getCommand()))(c);
 		}
 		catch (CommandBuffer::NoPendingCommandException const& e)
 		{
@@ -108,5 +116,12 @@ void	Client::execPendingCommands(void)
 			Log::Warn << "Invalid command received: " << e.what() << std::endl;
 		}
 	}
+}
+
+void	Client::execPRIVMSG(Command const& command)
+{
+	Log::Debug << "PRIVMSG executed (" << ipv4FromSockaddr(m_addr) << ")" << std::endl;
+	ITERATE_CONST(std::vector<std::string>, command.getParameters(), it)
+		Log::Info << "param : " << *it << std::endl;
 }
 

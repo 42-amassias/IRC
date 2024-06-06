@@ -6,13 +6,14 @@
 /*   By: amassias <amassias@student.42lehavre.fr    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/28 01:58:54 by amassias          #+#    #+#             */
-/*   Updated: 2024/06/06 09:44:16 by amassias         ###   ########.fr       */
+/*   Updated: 2024/06/06 15:40:56 by ale-boud         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef CLIENT_H
 # define CLIENT_H
 
+# include <map>
 # include <string>
 # include <sys/socket.h>
 
@@ -40,6 +41,7 @@ class Client
 
 	private:
 		Client(void);
+		void		execPRIVMSG(Command const& command);
 
 	private:
 		std::string		m_nickname;
@@ -50,6 +52,9 @@ class Client
 		CommandBuffer	m_buffer;
 
 		static const int	default_read_size = 1024;
+		static const std::map<std::string, void (Client::*)(Command const&)>	command_function_map;
+		static const std::pair<std::string, void (Client::*)(Command const&)>
+			_command_function_map[];
 
 	public:
 		

@@ -6,7 +6,7 @@
 /*   By: ale-boud <ale-boud@student.42lehavre.fr>   +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/06 15:11:01 by ale-boud          #+#    #+#             */
-/*   Updated: 2024/06/06 15:11:02 by ale-boud         ###   ########.fr       */
+/*   Updated: 2024/06/06 15:42:05 by ale-boud         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,9 +23,13 @@ class Command
 	public:
 		Command(Command const& o);
 		Command(std::vector<char> const& raw_command);
-		~Command(void);
+		~Command();
 
 		Command&	operator=(Command const& o);
+
+		std::string const&	getPrefix() const;
+		std::string const&	getCommand() const;
+		std::vector<std::string> const&	getParameters() const;
 	
 	private:
 		Command(void);
