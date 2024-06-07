@@ -19,6 +19,7 @@
 const std::pair<std::string, void (Client::*)(Command const&)>
 Client::_command_function_map[] = {
 	std::make_pair("PRIVMSG", &Client::execPRIVMSG),
+	std::make_pair("CAP", &Client::execCAP),
 };
 
 const std::map<std::string, void (Client::*)(Command const&)>
@@ -129,5 +130,20 @@ void	Client::execPRIVMSG(Command const& command)
 	Log::Debug << "PRIVMSG executed (" << ipv4FromSockaddr(m_addr) << ")" << std::endl;
 	ITERATE_CONST(std::vector<std::string>, command.getParameters(), it)
 		Log::Info << "param : " << *it << std::endl;
+}
+
+void	Client::execCAP(Command const& command)
+{
+	Log::Debug << "CAP executed (" << ipv4FromSockaddr(m_addr) << ")" << std::endl;
+	ITERATE_CONST(std::vector<std::string>, command.getParameters(), it)
+		Log::Info << "param : " << *it << std::endl;
+	if (command.getParameters().empty())
+		throw Command::InvalidCommandException("CAP executed without parameters");
+	if (command.getParameters()[0] != "LS")
+		throw Command::InvalidCommandException("CAP executed with invalid parameters : " + command.getParameters()[0]);
+	std::string	parameters[] = {"*", "multi-prefix asls"};
+	std::vector<char> c = Command("", "CAP", std::vector<std::string>(parameters, parameters + sizeof(parameters) / sizeof(*parameters))).encode(); 
+	ITERATE(std::vector<char>, c, itr)
+		std::cout << *itr;
 }
 

@@ -84,8 +84,41 @@ Command::Command(std::vector<char> const& raw_command) :
 	}
 }
 
+Command::Command(
+		std::string const& prefix,
+		std::string const& command,
+		std::vector<std::string> const& parameters) :
+	m_prefix(prefix),
+	m_command(command),
+	m_parameters(parameters)
+{
+}
+
 Command::~Command(void)
 {
+}
+
+std::vector<char>	Command::encode() const
+{
+	std::vector<char>	encoded_cmd;
+
+	if (!m_prefix.empty())
+	{
+		encoded_cmd.push_back(':');
+		encoded_cmd.insert(encoded_cmd.end(), m_prefix.begin(), m_prefix.end());
+		encoded_cmd.push_back(' ');
+	}
+	encoded_cmd.insert(encoded_cmd.end(), m_command.begin(), m_command.end());
+	ITERATE_CONST(std::vector<std::string>, m_parameters, pit)
+	{
+		encoded_cmd.push_back(' ');
+		if (pit->find(' ') != std::string::npos)
+			encoded_cmd.push_back(':');
+		encoded_cmd.insert(encoded_cmd.end(), pit->begin(), pit->end());
+	}
+	encoded_cmd.push_back('\r');
+	encoded_cmd.push_back('\n');
+	return encoded_cmd;
 }
 
 Command&	Command::operator=(Command const& o)

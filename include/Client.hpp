@@ -42,6 +42,7 @@ class Client
 	private:
 		Client(void);
 		void		execPRIVMSG(Command const& command);
+		void		execCAP(Command const& command);
 
 	private:
 		std::string		m_nickname;

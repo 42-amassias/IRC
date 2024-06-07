@@ -23,6 +23,9 @@ class Command
 	public:
 		Command(Command const& o);
 		Command(std::vector<char> const& raw_command);
+		Command(std::string const& prefix,
+				std::string const& command,
+				std::vector<std::string> const& parameters);
 		Command(void);
 		~Command();
 
@@ -31,6 +34,8 @@ class Command
 		std::string const&	getPrefix() const;
 		std::string const&	getCommand() const;
 		std::vector<std::string> const&	getParameters() const;
+
+		std::vector<char>	encode() const;
 	
 	private:
 
