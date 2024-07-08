@@ -24,7 +24,7 @@
 class Client
 {
 	public:
-		Client(struct sockaddr const& address);
+		Client(int fd, struct sockaddr const& address);
 		~Client(void);
 
 		std::string const&	getNickname() const;
@@ -35,20 +35,24 @@ class Client
 		void		setNickname(std::string const& s);
 		void		setUsername(std::string const& s);
 		void		setRealname(std::string const& s);
+		bool		isRegistered();
 
 		void		receive(int fd);
 		void		execPendingCommands(void);
 
+		void		sendCommand(Command const& command);
+
 	private:
 		Client(void);
 		void		execPRIVMSG(Command const& command);
-		void		execCAP(Command const& command);
+		void		execPASS(Command const& command);
 
 	private:
 		std::string		m_nickname;
 		std::string		m_username;
 		std::string		m_realname;
-		bool			m_logged;
+		bool			m_registered;
+		int				m_fd;
 		struct sockaddr	m_addr;
 		CommandBuffer	m_buffer;
 

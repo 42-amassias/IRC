@@ -15,22 +15,24 @@
 
 #include "Log.hpp"
 #include "Client.hpp"
+#include "Server.hpp"
 
 const std::pair<std::string, void (Client::*)(Command const&)>
 Client::_command_function_map[] = {
 	std::make_pair("PRIVMSG", &Client::execPRIVMSG),
-	std::make_pair("CAP", &Client::execCAP),
+	std::make_pair("PASS", &Client::execPASS),
 };
 
 const std::map<std::string, void (Client::*)(Command const&)>
 Client::command_function_map(_command_function_map,
 		_command_function_map + sizeof(_command_function_map) / sizeof(*_command_function_map));
 
-Client::Client(struct sockaddr const& addr) :
+Client::Client(int fd, struct sockaddr const& addr) :
 	m_nickname(),
 	m_username(),
 	m_realname(),
-	m_logged(false),
+	m_registered(false),
+	m_fd(fd),
 	m_addr(addr)
 {
 	Log::Info << "New connection : "
@@ -38,7 +40,7 @@ Client::Client(struct sockaddr const& addr) :
 }
 
 Client::Client(void) :
-	m_logged(false)
+	m_registered(false)
 {
 }
 
@@ -81,6 +83,11 @@ void	Client::setRealname(std::string const& s)
 	m_realname = s;
 }
 
+bool	Client::isRegistered()
+{
+	return m_registered;
+}
+
 void	Client::receive(int fd)
 {
 	char	buf[default_read_size];
@@ -97,6 +104,14 @@ void	Client::receive(int fd)
 			throw ReadErrorException(std::strerror(errno));
 		m_buffer.pushBack(buf, ret);
 	}
+}
+
+void	Client::sendCommand(Command const& command)
+{
+	std::vector<char>	data = command.encode();
+
+	Log::Info << "sending command : " << data.data() << std::endl;
+	send(m_fd, data.data(), data.size(), 0);
 }
 
 void	Client::execPendingCommands(void)
@@ -129,21 +144,32 @@ void	Client::execPRIVMSG(Command const& command)
 {
 	Log::Debug << "PRIVMSG executed (" << ipv4FromSockaddr(m_addr) << ")" << std::endl;
 	ITERATE_CONST(std::vector<std::string>, command.getParameters(), it)
-		Log::Info << "param : " << *it << std::endl;
+		Log::Debug << "param : " << *it << std::endl;
 }
 
-void	Client::execCAP(Command const& command)
+void	Client::execPASS(Command const& command)
 {
-	Log::Debug << "CAP executed (" << ipv4FromSockaddr(m_addr) << ")" << std::endl;
+	Command	c;
+	Log::Debug << "PASS executed (" << ipv4FromSockaddr(m_addr) << ")" << std::endl;
 	ITERATE_CONST(std::vector<std::string>, command.getParameters(), it)
-		Log::Info << "param : " << *it << std::endl;
-	if (command.getParameters().empty())
-		throw Command::InvalidCommandException("CAP executed without parameters");
-	if (command.getParameters()[0] != "LS")
-		throw Command::InvalidCommandException("CAP executed with invalid parameters : " + command.getParameters()[0]);
-	std::string	parameters[] = {"*", "multi-prefix asls"};
-	std::vector<char> c = Command("", "CAP", std::vector<std::string>(parameters, parameters + sizeof(parameters) / sizeof(*parameters))).encode(); 
-	ITERATE(std::vector<char>, c, itr)
-		std::cout << *itr;
+		Log::Debug << "param : " << *it << std::endl;
+	if (m_registered)
+	{
+		CREATE_COMMAND(c, "", "462", "You may not reregister");
+		sendCommand(c);
+	}
+	else if (command.getParameters().size() < 1)
+	{
+		CREATE_COMMAND(c, "", "461", "PASS :Not enough parameters");
+		sendCommand(c);
+	}
+	else if (Server::getInstance()->checkPwd(command.getParameters()[0]))
+	{
+
+	}
+	else
+	{
+	
+	}
 }
 

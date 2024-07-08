@@ -146,7 +146,7 @@ void	Server::acceptConnections(void)
 		if (fcntl(fd, F_SETFL, O_NONBLOCK))
 			throw InitializationFailureException("Could not un-block socket");
 		m_pollfds.push_back((struct pollfd){.fd = fd, .events = POLLIN, .revents = 0});
-		c = new Client(addr);
+		c = new Client(fd, addr);
 		m_clients.insert(std::make_pair(fd, c));
 	}
 }

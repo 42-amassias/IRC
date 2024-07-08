@@ -18,6 +18,14 @@
 
 # include "utils.hpp"
 
+# define CREATE_COMMAND(_c, _prefix, _command, ...)	\
+{													\
+	std::string t[] = {__VA_ARGS__};				\
+	_c = Command(_prefix, _command,					\
+			std::vector<std::string>(t,				\
+				t + sizeof(t) / sizeof(*t)));		\
+}
+
 class Command
 {
 	public:
