@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ale-boud <ale-boud@student.42lehavre.fr>   +#+  +:+       +#+        */
+/*   By: amassias <amassias@student.42lehavre.fr    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/06 14:16:08 by ale-boud          #+#    #+#             */
-/*   Updated: 2024/06/06 15:42:05 by ale-boud         ###   ########.fr       */
+/*   Updated: 2024/07/10 22:03:36 by amassias         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,11 +16,13 @@
 #include "Log.hpp"
 #include "Client.hpp"
 #include "Server.hpp"
+#include "replies.hpp"
 
 const std::pair<std::string, void (Client::*)(Command const&)>
 Client::_command_function_map[] = {
 	std::make_pair("PRIVMSG", &Client::execPRIVMSG),
 	std::make_pair("PASS", &Client::execPASS),
+	std::make_pair("NICK", &Client::execNICK),
 };
 
 const std::map<std::string, void (Client::*)(Command const&)>
@@ -150,26 +152,37 @@ void	Client::execPRIVMSG(Command const& command)
 void	Client::execPASS(Command const& command)
 {
 	Command	c;
+
 	Log::Debug << "PASS executed (" << ipv4FromSockaddr(m_addr) << ")" << std::endl;
 	ITERATE_CONST(std::vector<std::string>, command.getParameters(), it)
 		Log::Debug << "param : " << *it << std::endl;
 	if (m_registered)
 	{
-		CREATE_COMMAND(c, "", "462", "You may not reregister");
-		sendCommand(c);
+		Replies::ERR::already_registered(this);
+		return ;
 	}
-	else if (command.getParameters().size() < 1)
+	if (command.getParameters().size() < 1)
 	{
-		CREATE_COMMAND(c, "", "461", "PASS :Not enough parameters");
-		sendCommand(c);
+		Replies::ERR::need_more_params("PASS", this);
+		return ;
 	}
-	else if (Server::getInstance()->checkPwd(command.getParameters()[0]))
-	{
-
-	}
-	else
-	{
-	
-	}
+	m_server_password = command.getParameters()[0];
+	Log::Debug << "User " << this << " has registered a password: " << m_server_password << std::endl;
+	// if (!Server::getInstance()->checkPwd(command.getParameters()[0]))
+	// 	return ;
 }
 
+void	Client::execNICK(Command const& command)
+{
+	Command		c;
+	std::string	&nick;
+
+	if (command.getParameters().size() == 0)
+		Replies::ERR::no_nickname();
+	nick = command.getParameters()[0];
+	Server::getInstance().isNickAvailable(nick);
+	// Check for validity
+	// Check for availability
+	// Check for restrictions ?
+	CREATE_COMMAND(c, m_nickname + "@localhost", "nick", command.getParameters().at(1));
+}

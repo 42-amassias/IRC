@@ -6,7 +6,7 @@
 /*   By: amassias <amassias@student.42lehavre.fr    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/28 01:58:54 by amassias          #+#    #+#             */
-/*   Updated: 2024/06/06 15:40:56 by ale-boud         ###   ########.fr       */
+/*   Updated: 2024/07/10 21:44:39 by amassias         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -46,11 +46,13 @@ class Client
 		Client(void);
 		void		execPRIVMSG(Command const& command);
 		void		execPASS(Command const& command);
+		void		execNICK(Command const& command);
 
 	private:
 		std::string		m_nickname;
 		std::string		m_username;
 		std::string		m_realname;
+		std::string		m_server_password;
 		bool			m_registered;
 		int				m_fd;
 		struct sockaddr	m_addr;

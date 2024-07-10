@@ -6,7 +6,7 @@
 /*   By: amassias <amassias@student.42lehavre.fr    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/28 01:58:44 by amassias          #+#    #+#             */
-/*   Updated: 2024/06/06 15:10:57 by ale-boud         ###   ########.fr       */
+/*   Updated: 2024/07/08 16:01:11 by amassias         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -123,7 +123,7 @@ void	Server::setupSignals(void)
 	_setSigAction(SIGTERM, &action, &m_old_sigterm_action);
 	_setSigAction(SIGQUIT, &action, &m_old_sigquit_action);
 }
-
+#include "replies.hpp"
 void	Server::acceptConnections(void)
 {
 	size_t			addr_len;
@@ -158,12 +158,11 @@ void	Server::removeConnection(int fd)
 	delete c;
 	close(fd);
 	m_clients.erase(fd);
-	for (std::vector<struct pollfd>::iterator _it = (m_pollfds).begin();
-			_it != (m_pollfds).end();)
-		if (_it->fd == fd)
-			_it = m_pollfds.erase(_it);
+	ITERATE(std::vector<struct pollfd>, m_pollfds, itr)
+		if (itr->fd == fd)
+			itr = m_pollfds.erase(itr);
 		else
-			++_it;
+			++itr;
 }
 
 void	Server::init(void)
