@@ -6,7 +6,7 @@
 /*   By: amassias <amassias@student.42lehavre.fr    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/08 10:39:55 by amassias          #+#    #+#             */
-/*   Updated: 2024/07/10 21:33:54 by amassias         ###   ########.fr       */
+/*   Updated: 2024/07/11 21:01:47 by amassias         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,13 +17,43 @@ namespace Replies
 {
 	namespace RPL
 	{
+		// Code: 001
+		void	welcome(
+					Client *client
+					);
+
+		// Code: 002
+		void	your_host(
+					Client *client
+					);
+
+		// Code: 003
+		void	created(
+					Client *client
+					);
+
+		// Code: 004
+		void	my_info(
+					Client *client
+					);
+
+		// Code: 251
+		void	l_user_client(
+					Client *client
+					);
+
+		// Code: 255
+		void	l_user_me(
+					Client *client
+					);
+
 		// Code: 353
 		void	nam_reply(
 					std::string const& channel_name,
 					std::vector<Client *> const& clients,
 					Client *client
 					);
-		
+
 		// Code: 366
 		void	end_of_names(
 					std::string const& channel_name,
@@ -36,6 +66,16 @@ namespace Replies
 		// Code: 403
 		void	no_such_chan(
 					std::string const& channel_name,
+					Client *client
+					);
+
+		// Code: 431
+		void	no_nickname_given(
+					Client *client
+					);
+
+		// Code: 436
+		void	nick_collision(
 					Client *client
 					);
 

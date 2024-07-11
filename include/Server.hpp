@@ -6,7 +6,7 @@
 /*   By: amassias <amassias@student.42lehavre.fr    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/28 01:58:52 by amassias          #+#    #+#             */
-/*   Updated: 2024/05/28 03:34:04 by amassias         ###   ########.fr       */
+/*   Updated: 2024/07/11 20:54:38 by amassias         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -42,6 +42,12 @@ class Server
 
 		void	setPort(int port);
 		int		getPort(void) const;
+
+		std::vector<Client *>	getClients(void) const;
+
+		bool	isNickUsed(std::string const& nick) const;
+
+		void	registerNickChange(Client *author, std::string const& new_nickname);
 
 	private:
 		Server(void);

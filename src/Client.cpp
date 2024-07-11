@@ -6,7 +6,7 @@
 /*   By: amassias <amassias@student.42lehavre.fr    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/06 14:16:08 by ale-boud          #+#    #+#             */
-/*   Updated: 2024/07/10 22:03:36 by amassias         ###   ########.fr       */
+/*   Updated: 2024/07/11 21:02:15 by amassias         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,6 +23,9 @@ Client::_command_function_map[] = {
 	std::make_pair("PRIVMSG", &Client::execPRIVMSG),
 	std::make_pair("PASS", &Client::execPASS),
 	std::make_pair("NICK", &Client::execNICK),
+	std::make_pair("USER", &Client::execUSER),
+	std::make_pair("PING", &Client::execPING),
+	std::make_pair("MODE", &Client::execMODE),
 };
 
 const std::map<std::string, void (Client::*)(Command const&)>
@@ -34,6 +37,7 @@ Client::Client(int fd, struct sockaddr const& addr) :
 	m_username(),
 	m_realname(),
 	m_registered(false),
+	m_invisible(false),
 	m_fd(fd),
 	m_addr(addr)
 {
@@ -42,7 +46,8 @@ Client::Client(int fd, struct sockaddr const& addr) :
 }
 
 Client::Client(void) :
-	m_registered(false)
+	m_registered(false),
+	m_invisible(false)
 {
 }
 
@@ -68,6 +73,11 @@ std::string const&	Client::getRealname(void) const
 struct sockaddr const&	Client::getSockaddr(void) const
 {
 	return (m_addr);
+}
+
+bool	Client::isInvisible(void) const
+{
+	return (m_invisible);
 }
 
 void	Client::setNickname(std::string const& s)
@@ -137,7 +147,16 @@ void	Client::execPendingCommands(void)
 		}
 		catch (std::out_of_range const& e)
 		{
-			Log::Warn << "Unknown command : " << c.getCommand() << std::endl;
+			std::string	log;
+
+			log = m_username + ": Unknown command : " + c.getCommand();
+			if (!c.getParameters().empty())
+			{
+				log += " with paramters:";
+				ITERATE_CONST(std::vector<std::string>, c.getParameters(), itr)
+					log += " " + *itr;
+			}
+			Log::Warn << log << std::endl;
 		}
 	}
 }
@@ -174,15 +193,59 @@ void	Client::execPASS(Command const& command)
 
 void	Client::execNICK(Command const& command)
 {
-	Command		c;
-	std::string	&nick;
-
 	if (command.getParameters().size() == 0)
-		Replies::ERR::no_nickname();
-	nick = command.getParameters()[0];
-	Server::getInstance().isNickAvailable(nick);
-	// Check for validity
-	// Check for availability
-	// Check for restrictions ?
-	CREATE_COMMAND(c, m_nickname + "@localhost", "nick", command.getParameters().at(1));
+	{
+		Replies::ERR::no_nickname_given(this);
+		return ;
+	}
+	if (Server::getInstance()->isNickUsed(command.getParameters()[0]))
+	{
+		Replies::ERR::nick_collision(this);
+		return ;
+	}
+	if (m_registered)
+		Server::getInstance()->registerNickChange(this, command.getParameters()[0]);
+	m_nickname = command.getParameters()[0];
+}
+
+void	Client::execUSER(Command const& command)
+{
+	if (m_registered)
+	{
+		Replies::ERR::already_registered(this);
+		return ;
+	}
+	if (command.getParameters().size() < 4)
+	{
+		Replies::ERR::need_more_params("USER", this);
+		return ;
+	}
+	m_username = command.getParameters()[0];
+	m_realname = command.getParameters()[3];
+	m_registered = true;
+	Replies::RPL::welcome(this);
+	Replies::RPL::your_host(this);
+	Replies::RPL::created(this);
+	Replies::RPL::my_info(this);
+	Replies::RPL::l_user_client(this);
+	Replies::RPL::l_user_me(this);
+}
+
+void	Client::execPING(Command const& command)
+{
+	Command	c;
+
+	if (command.getParameters().size() < 1)
+	{
+		Replies::ERR::need_more_params("PING", this);
+		return ;
+	}
+	CREATE_COMMAND(c, "localhost", "PONG", "localhost", command.getParameters()[0]);
+	sendCommand(c);
+}
+
+void	Client::execMODE(Command const& command)
+{
+	(void)command;
+	Log::Debug << "MODE command not implemented yet." << std::endl;
 }

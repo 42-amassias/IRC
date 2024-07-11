@@ -6,7 +6,7 @@
 /*   By: amassias <amassias@student.42lehavre.fr    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/28 01:58:44 by amassias          #+#    #+#             */
-/*   Updated: 2024/07/08 16:01:11 by amassias         ###   ########.fr       */
+/*   Updated: 2024/07/11 20:54:31 by amassias         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -158,11 +158,12 @@ void	Server::removeConnection(int fd)
 	delete c;
 	close(fd);
 	m_clients.erase(fd);
-	ITERATE(std::vector<struct pollfd>, m_pollfds, itr)
-		if (itr->fd == fd)
-			itr = m_pollfds.erase(itr);
+	for (std::vector<struct pollfd>::iterator _it = (m_pollfds).begin();
+		_it != (m_pollfds).end();)
+		if (_it->fd == fd)
+			_it = m_pollfds.erase(_it);
 		else
-			++itr;
+			++_it;
 }
 
 void	Server::init(void)
@@ -258,6 +259,40 @@ void	Server::setPort(int port)
 int	Server::getPort(void) const
 {
 	return (m_port);
+}
+
+std::vector<Client *>	Server::getClients(void) const
+{
+	std::vector<Client *>	clients;
+
+	for (std::map<int, Client *>::const_iterator itr = (m_clients).begin(); itr != m_clients.end(); ++itr)
+		clients.push_back(itr->second);
+	return (clients);
+}
+
+bool	Server::isNickUsed(std::string const& nick) const
+{
+	for (std::map<int, Client *>::const_iterator itr = m_clients.begin(); itr != m_clients.end(); ++itr)
+	{
+		if (!itr->second->isRegistered())
+			continue ;
+		if (itr->second->getNickname() == nick)
+			return (true);
+	}
+	return (false);
+}
+
+void	Server::registerNickChange(Client *author, std::string const& new_nickname)
+{
+	Command	c;
+
+	CREATE_COMMAND(c, author->getNickname(), "NICK", new_nickname);
+	for (std::map<int, Client *>::const_iterator itr = m_clients.begin(); itr != m_clients.end(); ++itr)
+	{
+		if (!itr->second->isRegistered() || itr->second == author)
+			continue ;
+		itr->second->sendCommand(c);
+	}
 }
 
 static void _handleSignal(

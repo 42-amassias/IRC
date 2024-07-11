@@ -6,7 +6,7 @@
 /*   By: amassias <amassias@student.42lehavre.fr    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/28 01:58:54 by amassias          #+#    #+#             */
-/*   Updated: 2024/07/10 21:44:39 by amassias         ###   ########.fr       */
+/*   Updated: 2024/07/11 20:19:56 by amassias         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,10 +27,11 @@ class Client
 		Client(int fd, struct sockaddr const& address);
 		~Client(void);
 
-		std::string const&	getNickname() const;
-		std::string const&	getUsername() const;
-		std::string const&	getRealname() const;
+		std::string const&		getNickname() const;
+		std::string const&		getUsername() const;
+		std::string const&		getRealname() const;
 		struct sockaddr const&	getSockaddr() const;
+		bool					isInvisible() const;
 
 		void		setNickname(std::string const& s);
 		void		setUsername(std::string const& s);
@@ -47,6 +48,9 @@ class Client
 		void		execPRIVMSG(Command const& command);
 		void		execPASS(Command const& command);
 		void		execNICK(Command const& command);
+		void		execUSER(Command const& command);
+		void		execPING(Command const& command);
+		void		execMODE(Command const& command);
 
 	private:
 		std::string		m_nickname;
@@ -54,6 +58,7 @@ class Client
 		std::string		m_realname;
 		std::string		m_server_password;
 		bool			m_registered;
+		bool			m_invisible;
 		int				m_fd;
 		struct sockaddr	m_addr;
 		CommandBuffer	m_buffer;
