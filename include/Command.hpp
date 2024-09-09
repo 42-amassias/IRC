@@ -26,11 +26,20 @@
 				t + sizeof(t) / sizeof(*t)));		\
 }
 
+enum	irc_errcode {
+	ERR_NEEDMOREPARAMS=461,
+	ERR_ALREADYREGISTERED=462,
+	ERR_PASSWDMISMATCH=464,
+};
+
 class Command
 {
 	public:
 		Command(Command const& o);
 		Command(std::vector<char> const& raw_command);
+		Command(std::string const& prefix,
+				int command,
+				std::vector<std::string> const& parameters);
 		Command(std::string const& prefix,
 				std::string const& command,
 				std::vector<std::string> const& parameters);

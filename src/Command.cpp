@@ -86,6 +86,16 @@ Command::Command(std::vector<char> const& raw_command) :
 
 Command::Command(
 		std::string const& prefix,
+		int command,
+		std::vector<std::string> const& parameters) :
+	m_prefix(prefix),
+	m_command(SSTR(command)),
+	m_parameters(parameters)
+{
+}
+
+Command::Command(
+		std::string const& prefix,
 		std::string const& command,
 		std::vector<std::string> const& parameters) :
 	m_prefix(prefix),

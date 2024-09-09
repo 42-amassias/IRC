@@ -10,6 +10,7 @@
 /*                                                                            */
 /* ************************************************************************** */
 
+#include <algorithm>
 #include <cerrno>
 #include <cstring>
 
@@ -21,6 +22,8 @@ const std::pair<std::string, void (Client::*)(Command const&)>
 Client::_command_function_map[] = {
 	std::make_pair("PRIVMSG", &Client::execPRIVMSG),
 	std::make_pair("PASS", &Client::execPASS),
+	std::make_pair("NICK", &Client::execNICK),
+	std::make_pair("USER", &Client::execUSER),
 };
 
 const std::map<std::string, void (Client::*)(Command const&)>
@@ -31,6 +34,7 @@ Client::Client(int fd, struct sockaddr const& addr) :
 	m_nickname(),
 	m_username(),
 	m_realname(),
+	m_userpwd(),
 	m_registered(false),
 	m_fd(fd),
 	m_addr(addr)
@@ -123,7 +127,9 @@ void	Client::execPendingCommands(void)
 		try
 		{
 			c = m_buffer.popFront();
-			(this->*command_function_map.at(c.getCommand()))(c);
+			std::string	uc = c.getCommand();
+			std::transform(uc.begin(), uc.end(), uc.begin(), ::toupper);
+			(this->*command_function_map.at(uc))(c);
 		}
 		catch (CommandBuffer::NoPendingCommandException const& e)
 		{
@@ -155,21 +161,27 @@ void	Client::execPASS(Command const& command)
 		Log::Debug << "param : " << *it << std::endl;
 	if (m_registered)
 	{
-		CREATE_COMMAND(c, "", "462", "You may not reregister");
+		CREATE_COMMAND(c, "", ERR_ALREADYREGISTERED, "You may not reregister");
 		sendCommand(c);
 	}
 	else if (command.getParameters().size() < 1)
 	{
-		CREATE_COMMAND(c, "", "461", "PASS :Not enough parameters");
+		CREATE_COMMAND(c, "", ERR_NEEDMOREPARAMS, "PASS", "Not enough parameters");
 		sendCommand(c);
 	}
-	else if (Server::getInstance()->checkPwd(command.getParameters()[0]))
-	{
-
-	}
-	else
-	{
-	
-	}
+	m_userpwd = command.getParameters()[0];
 }
 
+void	Client::execNICK(Command const& command)
+{
+	Log::Debug << "NICK executed (" << ipv4FromSockaddr(m_addr) << ")" << std::endl;
+	ITERATE_CONST(std::vector<std::string>, command.getParameters(), it)
+		Log::Debug << "param : " << *it << std::endl;
+}
+
+void	Client::execUSER(Command const& command)
+{
+	Log::Debug << "USER executed (" << ipv4FromSockaddr(m_addr) << ")" << std::endl;
+	ITERATE_CONST(std::vector<std::string>, command.getParameters(), it)
+		Log::Debug << "param : " << *it << std::endl;
+}

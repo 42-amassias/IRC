@@ -72,7 +72,7 @@ Server::~Server(void)
 			it != (m_clients).end(); ++it)
 	{
 		close(it->first);
-		delete(it->second);
+		delete it->second;
 	}
 	_setSigAction(SIGINT, &m_old_sigint_action, NULL);
 	_setSigAction(SIGTERM, &m_old_sigterm_action, NULL);

@@ -15,6 +15,7 @@
 
 # include <arpa/inet.h>
 # include <string>
+# include <sstream>
 
 # define ITERATE_CONST(type, iterable, itr)									\
 	for (																	\
@@ -62,6 +63,9 @@
 		private:															\
 			std::string const	m_message;									\
 	}
+
+#define SSTR(x) static_cast< std::ostringstream & >(						\
+	(std::ostringstream() << std::dec << x)).str()
 
 std::string	ipv4FromSockaddr(struct sockaddr const& addr);
 std::string	ipv4FromSockaddr(struct sockaddr_in const& addr);

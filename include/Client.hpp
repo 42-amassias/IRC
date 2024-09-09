@@ -46,11 +46,14 @@ class Client
 		Client(void);
 		void		execPRIVMSG(Command const& command);
 		void		execPASS(Command const& command);
+		void		execNICK(Command const& command);
+		void		execUSER(Command const& command);
 
 	private:
 		std::string		m_nickname;
 		std::string		m_username;
 		std::string		m_realname;
+		std::string		m_userpwd;
 		bool			m_registered;
 		int				m_fd;
 		struct sockaddr	m_addr;
