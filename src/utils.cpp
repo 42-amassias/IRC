@@ -17,4 +17,3 @@ std::string	ipv4FromSockaddr(struct sockaddr_in const &addr)
 	return (std::string(buf));
 
 }
-

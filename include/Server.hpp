@@ -58,7 +58,7 @@ class Server
 		static const uint16_t	default_port = 6969;
 		static const int		connection_request_queue_size = 128;
 
-		static Server	*s_server_instance_ptr;
+		static Server			*s_server_instance_ptr;
 	
 	private:
 		int							m_socket_fd;

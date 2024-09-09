@@ -42,8 +42,17 @@ class Client
 
 		void		sendCommand(Command const& command);
 
+		enum client_state {
+			HANDSHAKE,
+			LOGIN,
+			REGISTERED,
+		};
+
 	private:
 		Client(void);
+
+		void		welcome();
+
 		void		execPRIVMSG(Command const& command);
 		void		execPASS(Command const& command);
 		void		execNICK(Command const& command);
@@ -54,7 +63,7 @@ class Client
 		std::string		m_username;
 		std::string		m_realname;
 		std::string		m_userpwd;
-		bool			m_registered;
+		client_state	m_state;
 		int				m_fd;
 		struct sockaddr	m_addr;
 		CommandBuffer	m_buffer;

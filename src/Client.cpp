@@ -35,7 +35,7 @@ Client::Client(int fd, struct sockaddr const& addr) :
 	m_username(),
 	m_realname(),
 	m_userpwd(),
-	m_registered(false),
+	m_state(HANDSHAKE),
 	m_fd(fd),
 	m_addr(addr)
 {
@@ -44,7 +44,7 @@ Client::Client(int fd, struct sockaddr const& addr) :
 }
 
 Client::Client(void) :
-	m_registered(false)
+	m_state(HANDSHAKE)
 {
 }
 
@@ -89,7 +89,7 @@ void	Client::setRealname(std::string const& s)
 
 bool	Client::isRegistered()
 {
-	return m_registered;
+	return m_state;
 }
 
 void	Client::receive(int fd)
@@ -159,7 +159,7 @@ void	Client::execPASS(Command const& command)
 	Log::Debug << "PASS executed (" << ipv4FromSockaddr(m_addr) << ")" << std::endl;
 	ITERATE_CONST(std::vector<std::string>, command.getParameters(), it)
 		Log::Debug << "param : " << *it << std::endl;
-	if (m_registered)
+	if (m_state != HANDSHAKE)
 	{
 		CREATE_COMMAND(c, "", ERR_ALREADYREGISTERED, "You may not reregister");
 		sendCommand(c);
@@ -169,19 +169,47 @@ void	Client::execPASS(Command const& command)
 		CREATE_COMMAND(c, "", ERR_NEEDMOREPARAMS, "PASS", "Not enough parameters");
 		sendCommand(c);
 	}
-	m_userpwd = command.getParameters()[0];
+	else if (!Server::getInstance()->checkPwd(command.getParameters()[0]))
+	{
+		CREATE_COMMAND(c, "", ERR_PASSWDMISMATCH, "Password incorrect");
+		sendCommand(c);
+	}
+	m_state = LOGIN;
 }
 
 void	Client::execNICK(Command const& command)
 {
+	Command	c;
 	Log::Debug << "NICK executed (" << ipv4FromSockaddr(m_addr) << ")" << std::endl;
-	ITERATE_CONST(std::vector<std::string>, command.getParameters(), it)
-		Log::Debug << "param : " << *it << std::endl;
+	if (command.getParameters().size() < 1)
+	{
+		CREATE_COMMAND(c, "", ERR_NEEDMOREPARAMS, "NICK", "Not enough parameters");
+		sendCommand(c);
+		return ;
+	}
+	if (!m_state)
+	{
+		m_nickname = command.getParameters()[0];
+		return ;
+	}
 }
 
 void	Client::execUSER(Command const& command)
 {
+	Command	c;
 	Log::Debug << "USER executed (" << ipv4FromSockaddr(m_addr) << ")" << std::endl;
-	ITERATE_CONST(std::vector<std::string>, command.getParameters(), it)
-		Log::Debug << "param : " << *it << std::endl;
+	if (m_state)
+	{
+		CREATE_COMMAND(c, "", ERR_ALREADYREGISTERED, "You may not reregister");
+		sendCommand(c);
+		return ;
+	}
+	if (command.getParameters().size() < 4)
+	{
+		CREATE_COMMAND(c, "", ERR_NEEDMOREPARAMS, "USER", "Not enough parameters");
+		sendCommand(c);
+		return ;
+	}
+	m_username = command.getParameters()[0];
+	m_realname = command.getParameters()[3];
 }
