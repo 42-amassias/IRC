@@ -15,9 +15,9 @@ namespace Log
 			std::string const& lvlname,
 			std::ostream *_out,
 			std::string const& lvlcolor) :
-		m_out(_out),
 		m_lvlname(lvlname),
-		m_lvlcolor(lvlcolor)
+		m_lvlcolor(lvlcolor),
+		m_out(_out)
 	{
 	}
 	

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Log.hpp                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ale-boud <ale-boud@student.42lehavre.fr>   +#+  +:+       +#+        */
+/*   By: ale-boud <ale-boud@student.42lehavre.fr    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/06 15:11:19 by ale-boud          #+#    #+#             */
-/*   Updated: 2024/06/06 15:11:20 by ale-boud         ###   ########.fr       */
+/*   Updated: 2024/09/25 17:19:39 by ale-boud         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,10 +27,10 @@ namespace Log
 	class LogStream
 	{
 		private:
-			std::ostream	*m_out;
 			std::string		m_lvlname;
 			std::string		m_lvlcolor;
 		public:
+			std::ostream	*m_out;
 			LogStream(
 					std::string const& lvlname,
 					std::ostream *_out,

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ale-boud <ale-boud@student.42lehavre.fr>   +#+  +:+       +#+        */
+/*   By: ale-boud <ale-boud@student.42lehavre.fr    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/06 14:16:08 by ale-boud          #+#    #+#             */
-/*   Updated: 2024/06/06 15:42:05 by ale-boud         ###   ########.fr       */
+/*   Updated: 2024/09/25 17:34:54 by ale-boud         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,7 +39,7 @@ Client::Client(int fd, struct sockaddr const& addr) :
 	m_fd(fd),
 	m_addr(addr)
 {
-	Log::Info << "New connection : "
+	Log::Debug << "New connection : "
 		<< ipv4FromSockaddr(m_addr) << ":" << ntohs(((struct sockaddr_in *)&m_addr)->sin_port) << std::endl;
 }
 
@@ -89,7 +89,7 @@ void	Client::setRealname(std::string const& s)
 
 bool	Client::isRegistered()
 {
-	return m_state;
+	return m_state == REGISTERED;
 }
 
 void	Client::receive(int fd)
@@ -99,13 +99,17 @@ void	Client::receive(int fd)
 	while (true)
 	{
 		ssize_t ret = recv(fd, buf, sizeof(buf), 0);
-		Log::Debug << "recv() == " << ret << std::endl;
+		Log::Info << "recv() == " << ret << std::endl;
 		if (ret == 0 || (ret <= 0 && errno == ECONNRESET))
 			throw ConnectionLostException();
 		else if (ret <= 0 && errno == EWOULDBLOCK)
 			break ;
 		else if (ret <= 0)
 			throw ReadErrorException(std::strerror(errno));
+#ifdef DEBUG
+		buf[ret] = '\0';
+		Log::Info << "buf == \n" << buf << std::endl;
+#endif
 		m_buffer.pushBack(buf, ret);
 	}
 }
@@ -129,6 +133,10 @@ void	Client::execPendingCommands(void)
 			c = m_buffer.popFront();
 			std::string	uc = c.getCommand();
 			std::transform(uc.begin(), uc.end(), uc.begin(), ::toupper);
+			Log::Info << uc;
+			ITERATE_CONST(std::vector<std::string>, c.getParameters(), it)
+				*Log::Info.m_out << " " << *it;
+			*Log::Info.m_out << " executed (" << ipv4FromSockaddr(m_addr) << ")" << std::endl;
 			(this->*command_function_map.at(uc))(c);
 		}
 		catch (CommandBuffer::NoPendingCommandException const& e)
@@ -148,7 +156,6 @@ void	Client::execPendingCommands(void)
 
 void	Client::execPRIVMSG(Command const& command)
 {
-	Log::Debug << "PRIVMSG executed (" << ipv4FromSockaddr(m_addr) << ")" << std::endl;
 	ITERATE_CONST(std::vector<std::string>, command.getParameters(), it)
 		Log::Debug << "param : " << *it << std::endl;
 }
@@ -156,7 +163,7 @@ void	Client::execPRIVMSG(Command const& command)
 void	Client::execPASS(Command const& command)
 {
 	Command	c;
-	Log::Debug << "PASS executed (" << ipv4FromSockaddr(m_addr) << ")" << std::endl;
+
 	ITERATE_CONST(std::vector<std::string>, command.getParameters(), it)
 		Log::Debug << "param : " << *it << std::endl;
 	if (m_state != HANDSHAKE)
@@ -180,7 +187,7 @@ void	Client::execPASS(Command const& command)
 void	Client::execNICK(Command const& command)
 {
 	Command	c;
-	Log::Debug << "NICK executed (" << ipv4FromSockaddr(m_addr) << ")" << std::endl;
+
 	if (command.getParameters().size() < 1)
 	{
 		CREATE_COMMAND(c, "", ERR_NEEDMOREPARAMS, "NICK", "Not enough parameters");
@@ -197,7 +204,7 @@ void	Client::execNICK(Command const& command)
 void	Client::execUSER(Command const& command)
 {
 	Command	c;
-	Log::Debug << "USER executed (" << ipv4FromSockaddr(m_addr) << ")" << std::endl;
+
 	if (m_state)
 	{
 		CREATE_COMMAND(c, "", ERR_ALREADYREGISTERED, "You may not reregister");
