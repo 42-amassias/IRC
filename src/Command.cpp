@@ -3,12 +3,14 @@
 /*                                                        :::      ::::::::   */
 /*   Command.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ale-boud <ale-boud@student.42lehavre.fr>   +#+  +:+       +#+        */
+/*   By: ale-boud <ale-boud@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/06 15:10:43 by ale-boud          #+#    #+#             */
-/*   Updated: 2024/06/06 15:42:05 by ale-boud         ###   ########.fr       */
+/*   Updated: 2024/10/08 18:21:48 by ale-boud         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
+
+#include <iomanip>
 
 #include "Command.hpp"
 
@@ -89,7 +91,7 @@ Command::Command(
 		int command,
 		std::vector<std::string> const& parameters) :
 	m_prefix(prefix),
-	m_command(SSTR(command)),
+	m_command(static_cast< std::ostringstream & >( (std::ostringstream() << std::dec << std::setw(3) << std::setfill('0') << command)).str()),
 	m_parameters(parameters)
 {
 }

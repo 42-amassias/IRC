@@ -6,7 +6,7 @@
 /*   By: ale-boud <ale-boud@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/06 14:16:08 by ale-boud          #+#    #+#             */
-/*   Updated: 2024/10/08 18:07:44 by ale-boud         ###   ########.fr       */
+/*   Updated: 2024/10/08 18:32:44 by ale-boud         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,6 +24,7 @@ Client::_command_function_map[] = {
 	std::make_pair("PASS", &Client::execPASS),
 	std::make_pair("NICK", &Client::execNICK),
 	std::make_pair("USER", &Client::execUSER),
+	std::make_pair("PING", &Client::execPING),
 };
 
 const std::map<std::string, void (Client::*)(Command const&)>
@@ -178,7 +179,9 @@ void	Client::welcome()
 		return ;
 	}
 	Server::getInstance()->getClientManager().addClient(this);
-	Log::Debug << "Welcome to ma bite" << std::endl;
+	CREATE_COMMAND_USER(c, "", RPL_WELCOME, "Welcome bitch")
+	sendCommand(c);
+	m_state = REGISTERED;
 }
 
 void	Client::execPRIVMSG(Command const& command)
@@ -237,4 +240,17 @@ void	Client::execUSER(Command const& command)
 	m_username = command.getParameters()[0];
 	m_realname = command.getParameters()[3];
 	welcome();
+}
+
+void	Client::execPING(Command const& command)
+{
+	Command	c;
+	if (command.getParameters().size() < 1)
+	{
+		CREATE_COMMAND_USER(c, "", ERR_NOORIGIN, "No origin specified");
+		sendCommand(c);
+		return ;
+	}
+	CREATE_COMMAND(c, "", "PONG", "localhost", command.getParameters()[0]);
+	sendCommand(c);
 }

@@ -6,7 +6,7 @@
 /*   By: ale-boud <ale-boud@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/06 15:11:01 by ale-boud          #+#    #+#             */
-/*   Updated: 2024/10/08 14:15:47 by ale-boud         ###   ########.fr       */
+/*   Updated: 2024/10/08 18:26:42 by ale-boud         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -43,6 +43,11 @@ enum	irc_errcode {
 	ERR_ERRONEUSNICKNAME=432,
 	ERR_NICKNAMEINUSE=433,
 	ERR_NICKCOLLISION=436,
+	ERR_NOORIGIN=409,
+};
+
+enum	irc_rplcode {
+	RPL_WELCOME=001,
 };
 
 class Command
