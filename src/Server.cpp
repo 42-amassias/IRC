@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: amassias <amassias@student.42lehavre.fr    +#+  +:+       +#+        */
+/*   By: ale-boud <ale-boud@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/28 01:58:44 by amassias          #+#    #+#             */
-/*   Updated: 2024/06/06 15:10:57 by ale-boud         ###   ########.fr       */
+/*   Updated: 2024/10/08 16:33:09 by ale-boud         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -61,6 +61,7 @@ Server::Server(void) :
 	m_pwd(""),
 	m_pollfds(),
 	m_clients(),
+	m_client_manager(),
 	m_running(false)
 {
 }
@@ -234,6 +235,11 @@ void	Server::loop(void)
 						<< ipv4FromSockaddr(c->getSockaddr()) << ": " << e.what() << std::endl;
 					removeConnection(it->fd);
 				}
+				catch (Client::BadPasswordException const& e)
+				{
+					Log::Warn << ipv4FromSockaddr(c->getSockaddr()) << ": " << e.what() << std::endl;
+					removeConnection(it->fd);
+				}
 			}
 		}
 	}
@@ -259,6 +265,11 @@ void	Server::setPort(int port)
 int	Server::getPort(void) const
 {
 	return (m_port);
+}
+
+ClientManager	&Server::getClientManager()
+{
+	return (m_client_manager);
 }
 
 static void _handleSignal(

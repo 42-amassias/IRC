@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: amassias <amassias@student.42lehavre.fr    +#+  +:+       +#+        */
+/*   By: ale-boud <ale-boud@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/28 01:58:54 by amassias          #+#    #+#             */
-/*   Updated: 2024/06/06 15:40:56 by ale-boud         ###   ########.fr       */
+/*   Updated: 2024/10/08 14:08:31 by ale-boud         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -43,8 +43,8 @@ class Client
 		void		sendCommand(Command const& command);
 
 		enum client_state {
-			HANDSHAKE,
 			LOGIN,
+			RETRY,
 			REGISTERED,
 		};
 
@@ -77,6 +77,7 @@ class Client
 		
 		CREATE_EXCEPTION(ConnectionLost, "Connection lost");
 		CREATE_EXCEPTION_MESSAGE(ReadError);
+		CREATE_EXCEPTION(BadPassword, "Bad password");
 };
 
 #endif

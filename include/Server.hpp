@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: amassias <amassias@student.42lehavre.fr    +#+  +:+       +#+        */
+/*   By: ale-boud <ale-boud@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/28 01:58:52 by amassias          #+#    #+#             */
-/*   Updated: 2024/05/28 03:34:04 by amassias         ###   ########.fr       */
+/*   Updated: 2024/10/08 16:32:38 by ale-boud         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,8 +17,10 @@
 # include <signal.h>
 # include <vector>
 # include <map>
+# include <set>
 
 # include "Client.hpp"
+# include "ClientManager.hpp"
 
 # include "utils.hpp"
 
@@ -42,6 +44,8 @@ class Server
 
 		void	setPort(int port);
 		int		getPort(void) const;
+
+		ClientManager	&getClientManager();
 
 	private:
 		Server(void);
@@ -67,6 +71,7 @@ class Server
 		std::string					m_pwd;
 		std::vector<struct pollfd>	m_pollfds;
 		std::map<int, Client *>		m_clients;
+		ClientManager				m_client_manager;
 		volatile bool				m_running;
 		struct sigaction			m_old_sigint_action;
 		struct sigaction			m_old_sigterm_action;

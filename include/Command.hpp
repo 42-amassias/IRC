@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Command.hpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ale-boud <ale-boud@student.42lehavre.fr>   +#+  +:+       +#+        */
+/*   By: ale-boud <ale-boud@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/06 15:11:01 by ale-boud          #+#    #+#             */
-/*   Updated: 2024/06/06 15:42:05 by ale-boud         ###   ########.fr       */
+/*   Updated: 2024/10/08 14:15:47 by ale-boud         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,10 +26,23 @@
 				t + sizeof(t) / sizeof(*t)));		\
 }
 
+# define CREATE_COMMAND_USER(_c, _prefix, _command, ...)	\
+{															\
+	std::string t[] = {m_nickname, __VA_ARGS__};			\
+	_c = Command(_prefix, _command,							\
+			std::vector<std::string>(t,						\
+				t + sizeof(t) / sizeof(*t)));				\
+}
+
 enum	irc_errcode {
 	ERR_NEEDMOREPARAMS=461,
 	ERR_ALREADYREGISTERED=462,
 	ERR_PASSWDMISMATCH=464,
+	ERR_UNKNOWNCOMMAND=421,
+	ERR_NONICKNAMEGIVEN=431,
+	ERR_ERRONEUSNICKNAME=432,
+	ERR_NICKNAMEINUSE=433,
+	ERR_NICKCOLLISION=436,
 };
 
 class Command

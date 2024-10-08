@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ale-boud <ale-boud@student.42lehavre.fr>   +#+  +:+       +#+        */
+/*   By: ale-boud <ale-boud@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/06 14:16:08 by ale-boud          #+#    #+#             */
-/*   Updated: 2024/06/06 15:42:05 by ale-boud         ###   ########.fr       */
+/*   Updated: 2024/10/08 18:07:44 by ale-boud         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,11 +31,11 @@ Client::command_function_map(_command_function_map,
 		_command_function_map + sizeof(_command_function_map) / sizeof(*_command_function_map));
 
 Client::Client(int fd, struct sockaddr const& addr) :
-	m_nickname(),
+	m_nickname("*"),
 	m_username(),
 	m_realname(),
 	m_userpwd(),
-	m_state(HANDSHAKE),
+	m_state(LOGIN),
 	m_fd(fd),
 	m_addr(addr)
 {
@@ -44,12 +44,13 @@ Client::Client(int fd, struct sockaddr const& addr) :
 }
 
 Client::Client(void) :
-	m_state(HANDSHAKE)
+	m_state(LOGIN)
 {
 }
 
 Client::~Client(void)
 {
+	Server::getInstance()->getClientManager().removeClient(this);
 }
 
 std::string const&	Client::getNickname(void) const
@@ -99,7 +100,6 @@ void	Client::receive(int fd)
 	while (true)
 	{
 		ssize_t ret = recv(fd, buf, sizeof(buf), 0);
-		Log::Debug << "recv() == " << ret << std::endl;
 		if (ret == 0 || (ret <= 0 && errno == ECONNRESET))
 			throw ConnectionLostException();
 		else if (ret <= 0 && errno == EWOULDBLOCK)
@@ -129,6 +129,9 @@ void	Client::execPendingCommands(void)
 			c = m_buffer.popFront();
 			std::string	uc = c.getCommand();
 			std::transform(uc.begin(), uc.end(), uc.begin(), ::toupper);
+			Log::Debug << "Exec command :\"" << uc << "\" (" << ipv4FromSockaddr(m_addr) << ")" << std::endl;
+			ITERATE_CONST(std::vector<std::string>, c.getParameters(), itr)
+				Log::Info << "ARGS: " << *itr << std::endl;
 			(this->*command_function_map.at(uc))(c);
 		}
 		catch (CommandBuffer::NoPendingCommandException const& e)
@@ -142,8 +145,40 @@ void	Client::execPendingCommands(void)
 		catch (std::out_of_range const& e)
 		{
 			Log::Warn << "Unknown command : " << c.getCommand() << std::endl;
+			Command	_c;
+			CREATE_COMMAND_USER(_c, "", ERR_UNKNOWNCOMMAND, c.getCommand(), "Unknown command");
+			sendCommand(_c);
 		}
 	}
+}
+
+void	Client::welcome()
+{
+	Command	c;
+	if (!Server::getInstance()->checkPwd(m_userpwd))
+	{
+		CREATE_COMMAND_USER(c, "", ERR_PASSWDMISMATCH, "Password incorrect");
+		sendCommand(c);
+		CREATE_COMMAND(c, "", "ERROR", "Closing link: " + ipv4FromSockaddr(m_addr) + " (Bad password)");
+		sendCommand(c);
+		throw BadPasswordException();
+	}
+	if (Server::getInstance()->getClientManager().inUse(m_nickname))
+	{
+		CREATE_COMMAND_USER(c, "", ERR_NICKNAMEINUSE, m_nickname, "Nickname is already in use");
+		sendCommand(c);
+		m_state = RETRY;
+		return ;
+	}
+	if (!usernickValidator(m_nickname))
+	{
+		CREATE_COMMAND_USER(c, "", ERR_ERRONEUSNICKNAME, "Erroneus nickname");
+		sendCommand(c);
+		m_state = RETRY;
+		return ;
+	}
+	Server::getInstance()->getClientManager().addClient(this);
+	Log::Debug << "Welcome to ma bite" << std::endl;
 }
 
 void	Client::execPRIVMSG(Command const& command)
@@ -156,60 +191,50 @@ void	Client::execPRIVMSG(Command const& command)
 void	Client::execPASS(Command const& command)
 {
 	Command	c;
-	Log::Debug << "PASS executed (" << ipv4FromSockaddr(m_addr) << ")" << std::endl;
-	ITERATE_CONST(std::vector<std::string>, command.getParameters(), it)
-		Log::Debug << "param : " << *it << std::endl;
-	if (m_state != HANDSHAKE)
+	if (m_state != LOGIN)
 	{
-		CREATE_COMMAND(c, "", ERR_ALREADYREGISTERED, "You may not reregister");
+		CREATE_COMMAND_USER(c, "", ERR_ALREADYREGISTERED, "You may not reregister");
 		sendCommand(c);
 	}
 	else if (command.getParameters().size() < 1)
 	{
-		CREATE_COMMAND(c, "", ERR_NEEDMOREPARAMS, "PASS", "Not enough parameters");
+		CREATE_COMMAND_USER(c, "", ERR_NEEDMOREPARAMS, "Not enough parameters");
 		sendCommand(c);
 	}
-	else if (!Server::getInstance()->checkPwd(command.getParameters()[0]))
-	{
-		CREATE_COMMAND(c, "", ERR_PASSWDMISMATCH, "Password incorrect");
-		sendCommand(c);
-	}
-	m_state = LOGIN;
+	m_userpwd = command.getParameters()[0];
 }
 
 void	Client::execNICK(Command const& command)
 {
 	Command	c;
-	Log::Debug << "NICK executed (" << ipv4FromSockaddr(m_addr) << ")" << std::endl;
 	if (command.getParameters().size() < 1)
 	{
-		CREATE_COMMAND(c, "", ERR_NEEDMOREPARAMS, "NICK", "Not enough parameters");
+		CREATE_COMMAND_USER(c, "", ERR_NEEDMOREPARAMS, "Not enough parameters");
 		sendCommand(c);
 		return ;
 	}
-	if (!m_state)
-	{
-		m_nickname = command.getParameters()[0];
-		return ;
-	}
+	// TODO: check in use
+	m_nickname = command.getParameters()[0];
+	if (m_state == RETRY)
+		welcome();
 }
 
 void	Client::execUSER(Command const& command)
 {
 	Command	c;
-	Log::Debug << "USER executed (" << ipv4FromSockaddr(m_addr) << ")" << std::endl;
-	if (m_state)
+	if (m_state != LOGIN)
 	{
-		CREATE_COMMAND(c, "", ERR_ALREADYREGISTERED, "You may not reregister");
+		CREATE_COMMAND_USER(c, "", ERR_ALREADYREGISTERED, "You may not reregister");
 		sendCommand(c);
 		return ;
 	}
 	if (command.getParameters().size() < 4)
 	{
-		CREATE_COMMAND(c, "", ERR_NEEDMOREPARAMS, "USER", "Not enough parameters");
+		CREATE_COMMAND_USER(c, "", ERR_NEEDMOREPARAMS, "Not enough parameters");
 		sendCommand(c);
 		return ;
 	}
 	m_username = command.getParameters()[0];
 	m_realname = command.getParameters()[3];
+	welcome();
 }

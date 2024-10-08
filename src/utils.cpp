@@ -17,3 +17,15 @@ std::string	ipv4FromSockaddr(struct sockaddr_in const &addr)
 	return (std::string(buf));
 
 }
+
+bool	usernickValidator(std::string const& str)
+{
+	if (str.length() == 0)
+		return (false);
+	if (!isalpha(str[0]))
+		return (false);
+	for (std::size_t i = 1; i < str.length(); ++i)
+		if (!isalnum(str[i]) && str[i] != '-' && str[i] != '_')
+			return (false);
+	return (true);
+}
