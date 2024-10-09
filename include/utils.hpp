@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   utils.hpp                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ale-boud <ale-boud@student.42.fr>          +#+  +:+       +#+        */
+/*   By: Antoine Massias <massias.antoine.pro@gm    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/28 01:58:36 by amassias          #+#    #+#             */
-/*   Updated: 2024/10/08 18:07:52 by ale-boud         ###   ########.fr       */
+/*   Updated: 2024/10/09 22:39:18 by Antoine Mas      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -69,6 +69,7 @@
 
 std::string	ipv4FromSockaddr(struct sockaddr const& addr);
 std::string	ipv4FromSockaddr(struct sockaddr_in const& addr);
+// TODO: Split usernickValidator
 bool		usernickValidator(std::string const& str);
 
 #endif

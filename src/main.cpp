@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   main.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ale-boud <ale-boud@student.42.fr>          +#+  +:+       +#+        */
+/*   By: Antoine Massias <massias.antoine.pro@gm    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/28 01:58:48 by amassias          #+#    #+#             */
-/*   Updated: 2024/10/09 06:35:31 by ale-boud         ###   ########.fr       */
+/*   Updated: 2024/10/09 22:41:52 by Antoine Mas      ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,10 +16,7 @@
 #include <cstdlib>
 #include <cstring>
 
-static void	usage(char *pn)
-{
-	std::cerr << "usage: " << pn << " [PORT] [PASSWORD]" << std::endl;
-}
+#define PORT_MAX 65535
 
 enum ProgramArgs
 {
@@ -29,22 +26,32 @@ enum ProgramArgs
 	PROG__NBARGS,
 };
 
+static const char*	pn;
+
+// Prints the program usage.
+static void	usage(void);
+
+// Returns `true` on error.
+static bool	check_arg_count(int argc, const char **argv);
+
+// Returns `true` on error.
+static bool	parse_port(const char* str_port, int& port);
+
+// Returns `true` on error.
+static bool	check_password(const char* str_password);
+
 int	main(int argc, char **argv)
 {
-	if (argc != 3)
+	int	port;
+
+	pn = argv[PROG_PN];
+	if (check_arg_count(argc, (const char **)argv)
+		|| parse_port(argv[PROG_PORT], port)
+		|| check_password(argv[PROG_PWD]))
 	{
-		std::cerr << argv[PROG_PN] << ": Invalid number of arguments." << std::endl;
-		usage(argv[PROG_PN]);
+		usage();
 		return (EXIT_FAILURE);
 	}
-	for (char *str = argv[PROG_PORT]; *str != '\0'; ++str)
-		if (!std::isdigit(*str))
-		{
-			std::cerr << argv[PROG_PN] << ": Invalid port number." << std::endl;
-			usage(argv[PROG_PN]);
-			return (EXIT_FAILURE);
-		}
-	const int	port = atoi(argv[PROG_PORT]);
 	try
 	{
 		Server::getInstance().setPwd(argv[PROG_PWD]);
@@ -57,4 +64,43 @@ int	main(int argc, char **argv)
 		Log::Error << "Server encountered a fatal error : " << e.what() << std::endl;
 	}
 	return (0);
+}
+
+static void	usage(void)
+{
+	std::cerr << "usage: " << pn << " [PORT] [PASSWORD]" << std::endl;
+}
+
+static bool	check_arg_count(int argc, const char **argv)
+{
+	if (argc == 3)
+		return (false);
+	std::cerr << argv[PROG_PN] << ": Invalid number of arguments." << std::endl;
+	return (true);
+}
+
+static bool	parse_port(const char* str_port, int& port)
+{
+	port = 0;
+	for (const char *str = str_port; *str != '\0'; ++str)
+	{
+		port = 10 * port + *str - '0';
+		if (!std::isdigit(*str) || port > PORT_MAX)
+		{
+			std::cerr << pn << ": Invalid port number." << std::endl;
+			return (true);
+		}
+	}
+	return (false);
+}
+
+static bool	check_password(const char* str_password)
+{
+	for (const char* itr = str_password; *itr; ++itr)
+		if (*itr == '\0' || *itr == '\n' || *itr == '\r' || *itr == ':')
+		{
+			std::cerr << pn << ": Invalid password." << std::endl;
+			return (true);
+		}
+	return (false);
 }
