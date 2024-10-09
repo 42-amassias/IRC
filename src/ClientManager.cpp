@@ -32,7 +32,6 @@ bool	ClientManager::inUse(std::string const& nickname) const
 	return (false);
 }
 
-
 Client	*ClientManager::getClient(std::string const& nickname)
 {
 	ITERATE(std::set<Client *>, m_logged_clients, itr)

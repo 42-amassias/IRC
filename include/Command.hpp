@@ -6,7 +6,7 @@
 /*   By: ale-boud <ale-boud@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/06 15:11:01 by ale-boud          #+#    #+#             */
-/*   Updated: 2024/10/09 04:19:22 by ale-boud         ###   ########.fr       */
+/*   Updated: 2024/10/09 04:42:24 by ale-boud         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,6 +39,20 @@
 	sendCommand(__c);										\
 }
 
+# define WELCOME_MESSAGE (								\
+"__        __   _                            _        \n"\
+"\\ \\      / /__| | ___ ___  _ __ ___   ___  | |_ ___  \n"\
+" \\ \\ /\\ / / _ \\ |/ __/ _ \\| '_ ` _ \\ / _ \\ | __/ _ \\ \n"\
+"  \\ V  V /  __/ | (_| (_) | | | | | |  __/ | || (_) |\n"\
+"   \\_/\\_/ \\___|_|\\___\\___/|_|_|_| |_|\\___|  \\__\\___/ \n"\
+"           _____ _____   ___ ____   ____             \n"\
+"          |  ___|_   _| |_ _|  _ \\ / ___|            \n"\
+"          | |_    | |    | || |_) | |                \n"\
+"          |  _|   | |    | ||  _ <| |___             \n"\
+"          |_|     |_|___|___|_| \\_\\\\____|            \n"\
+"                   |_____|                           \n"\
+)
+
 # define CREATE_ERR(client, errname, ...) (CREATE_COMMAND("", errname, (client).getNickname(), __VA_ARGS__))
 # define CREATE_ERR_NEEDMOREPARAMS(client, command) (CREATE_ERR(client, ERR_NEEDMOREPARAMS, (command), "Not enough parameters"))
 # define CREATE_ERR_ALREADYREGISTERED(client) (CREATE_ERR(client, ERR_ALREADYREGISTERED, "You may not reregister"))
@@ -50,7 +64,7 @@
 # define CREATE_ERR_UNKNOWNCOMMAND(client, command) (CREATE_ERR(client, ERR_UNKNOWNCOMMAND, (command), "Unknown command"))
 # define CREATE_ERR_NOTREGISTERED(client) (CREATE_ERR(client, ERR_NOTREGISTERED, "You have not registered"))
 # define CREATE_ERR_NOORIGIN(client) (CREATE_ERR(client, ERR_NOORIGIN, "No origin specified"))
-# define CREATE_RPL_WELCOME(client) (CREATE_COMMAND("", RPL_WELCOME, (client).getNickname(), "Welcome to the best irc server bitch"))
+# define CREATE_RPL_WELCOME(client) (CREATE_COMMAND("", RPL_WELCOME, (client).getNickname(), WELCOME_MESSAGE))
 
 enum	irc_errcode {
 	ERR_NEEDMOREPARAMS=461,
