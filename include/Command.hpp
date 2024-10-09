@@ -6,7 +6,7 @@
 /*   By: ale-boud <ale-boud@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/06 15:11:01 by ale-boud          #+#    #+#             */
-/*   Updated: 2024/10/09 05:23:00 by ale-boud         ###   ########.fr       */
+/*   Updated: 2024/10/09 08:52:08 by ale-boud         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -64,9 +64,15 @@
 # define CREATE_ERR_UNKNOWNCOMMAND(client, command) (CREATE_ERR(client, ERR_UNKNOWNCOMMAND, (command), "Unknown command"))
 # define CREATE_ERR_NOTREGISTERED(client) (CREATE_ERR(client, ERR_NOTREGISTERED, "You have not registered"))
 # define CREATE_ERR_NOORIGIN(client) (CREATE_ERR(client, ERR_NOORIGIN, "No origin specified"))
+# define CREATE_ERR_NOSUCHCHANNEL(client, chan_name) (CREATE_ERR(client, ERR_NOSUCHCHANNEL, (chan_name), "No such channel"))
+# define CREATE_ERR_INVITEONLYCHAN(client, chan_name) (CREATE_ERR(client, ERR_INVITEONLYCHAN, (chan_name), "Cannot join channel (+i)"))
+# define CREATE_ERR_CHANNELISFULL(client, chan_name) (CREATE_ERR(client, ERR_CHANNELISFULL, (chan_name), "Cannot join channel (+l)"))
+# define CREATE_ERR_CANNOTSENDTOCHAN(client, chan_name) (CREATE_ERR(client, ERR_CANNOTSENDTOCHAN, (chan_name), "Cannot sent to channel"))
 
 # define CREATE_RPL_WELCOME(client) (CREATE_COMMAND("", RPL_WELCOME, (client).getNickname(), WELCOME_MESSAGE))
 # define CREATE_RPL_YOUREOPER(client) (CREATE_COMMAND("", RPL_YOUREOPER, (client).getNickname(), "You are now an IRC operator"))
+# define CREATE_RPL_TOPIC(client, chan_name, topic) (CREATE_COMMAND("", RPL_TOPIC, (client).getNickname(), (chan_name), (topic)))
+# define CREATE_RPL_ENDOFNAMES(client, chan_name) (CREATE_COMMAND("", RPL_ENDOFNAMES, (client).getNickname(), (chan_name), "End of NAMES list"))
 
 enum	irc_errcode {
 	ERR_NEEDMOREPARAMS=461,
@@ -80,12 +86,19 @@ enum	irc_errcode {
 	ERR_NICKCOLLISION=436,
 	ERR_NOORIGIN=409,
 	ERR_TOOMANYTARGETS=407,
+	ERR_NOSUCHCHANNEL=403,
+	ERR_CHANNELISFULL=471,
+	ERR_CANNOTSENDTOCHAN=404,
+	ERR_INVITEONLYCHAN=473,
 	ERR_NOSUCHNICK=401,
 };
 
 enum	irc_rplcode {
 	RPL_WELCOME=001,
 	RPL_YOUREOPER=381,
+	RPL_TOPIC=332,
+	RPL_NAMREPLY=353,
+	RPL_ENDOFNAMES=366,
 };
 
 class Command

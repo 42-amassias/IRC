@@ -6,13 +6,14 @@
 /*   By: ale-boud <ale-boud@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/06 14:16:08 by ale-boud          #+#    #+#             */
-/*   Updated: 2024/10/09 05:31:17 by ale-boud         ###   ########.fr       */
+/*   Updated: 2024/10/09 08:38:25 by ale-boud         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include <algorithm>
 #include <cerrno>
 #include <cstring>
+#include <sstream>
 
 #include "Log.hpp"
 #include "Client.hpp"
@@ -39,6 +40,7 @@ Client::_logged_command_function_map[] = {
 	std::make_pair("NOTICE", &Client::execNOTICE),
 	std::make_pair("OPER", &Client::execOPER),
 	std::make_pair("JOIN", &Client::execJOIN),
+	std::make_pair("QUIT", &Client::execQUIT),
 };
 
 const std::map<std::string, void (Client::*)(Command const&)>
@@ -61,7 +63,10 @@ Client::Client(int fd, struct sockaddr const& addr) :
 
 Client::~Client(void)
 {
+	if (m_state == REGISTERED)
+		Server::getChannelManager().sendToAll(CREATE_COMMAND(getPrefix(), "QUIT", "Leaving like a rockstar"), this);
 	Server::getClientManager().removeClient(this);
+	Server::getChannelManager().removeClient(this);
 }
 
 std::string const&	Client::getNickname(void) const
@@ -121,6 +126,7 @@ void	Client::receive(int fd)
 	while (true)
 	{
 		ssize_t ret = recv(fd, buf, sizeof(buf), 0);
+		// Log::Info << "recv() == " << ret << std::endl;
 		if (ret == 0 || (ret <= 0 && errno == ECONNRESET))
 			throw ConnectionLostException();
 		else if (ret <= 0 && errno == EWOULDBLOCK)
@@ -224,7 +230,26 @@ void	Client::execPRIVMSG(Command const& command)
 	}
 	else
 	{
-		// TODO: channel
+		std::string	chan_name(command.getParameters()[0]);
+		chan_name.erase(chan_name.begin());
+		try
+		{
+			Server::getChannelManager().
+					getChannel(chan_name).
+					sendToAll(CREATE_COMMAND(getPrefix(), "PRIVMSG", command.getParameters()[0], command.getParameters()[1]), this);
+		}
+		catch (ChannelManager::DoesNotExistException const& e)
+		{
+			sendCommand(CREATE_ERR_NOSUCHCHANNEL(*this, "#" + chan_name));
+		}
+		catch (Channel::NotRegisteredException const& e)
+		{
+			sendCommand(CREATE_ERR_CANNOTSENDTOCHAN(*this, "#" + chan_name));
+		}
+		catch (std::exception const& e)
+		{
+			Log::Error << "Error encountered when broadcasting message to channel : " << chan_name << std::endl;
+		}
 	}
 }
 
@@ -314,5 +339,48 @@ void	Client::execOPER(Command const& command)
 
 void	Client::execJOIN(Command const& command)
 {
-	
+	std::vector<std::string> const	&params = command.getParameters();
+	if (params.size() < 1)
+		sendCommand(CREATE_ERR_NEEDMOREPARAMS(*this, command.getCommand()));
+	else
+	{
+		std::stringstream	chan_name_ss(params[0]); // Not the 1939/45 thing
+		std::stringstream	chan_key_ss(params.size() >= 2 ? params[1] : "");
+		std::string			chan_name;
+		std::string			chan_key;
+		while (std::getline(chan_name_ss, chan_name, ','))
+		{
+			if (!std::getline(chan_key_ss, chan_key, ',')) // ignore if we no longer have key
+				chan_key = "";
+			if (chan_name.empty())
+				continue ;
+			chan_name.erase(chan_name.begin());
+			try
+			{
+				Server::getChannelManager().createOrJoin(chan_name, chan_key, this);
+			}
+			catch(Channel::InvalidChannelNameException const& e)
+			{
+				sendCommand(CREATE_ERR_NOSUCHCHANNEL(*this, chan_name));
+			}
+			catch(Channel::NotInvitedException const& e)
+			{
+				sendCommand(CREATE_ERR_INVITEONLYCHAN(*this, "#" + chan_name));
+			}
+			catch(Channel::ChannelFullException const& e)
+			{
+				sendCommand(CREATE_ERR_CHANNELISFULL(*this, "#" + chan_name));
+			}
+		}
+	}
+}
+
+void	Client::execQUIT(Command const& command)
+{
+	Command	c(command);
+
+	c.setPrefix(getPrefix());
+	Server::getChannelManager().sendToAll(c, this); // todo trim args
+	m_state = QUIT;
+	throw QuitMessageException();
 }

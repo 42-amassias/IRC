@@ -6,7 +6,7 @@
 /*   By: ale-boud <ale-boud@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/28 01:58:54 by amassias          #+#    #+#             */
-/*   Updated: 2024/10/09 05:13:29 by ale-boud         ###   ########.fr       */
+/*   Updated: 2024/10/09 08:26:58 by ale-boud         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -48,6 +48,7 @@ class Client
 			LOGIN,
 			RETRY,
 			REGISTERED,
+			QUIT,
 		};
 
 	private:
@@ -64,6 +65,7 @@ class Client
 		void		execNOTICE(Command const& command);
 		void		execOPER(Command const& command);
 		void		execJOIN(Command const& command);
+		void		execQUIT(Command const& command);
 
 	private:
 		std::string		m_nickname;
@@ -92,6 +94,7 @@ class Client
 		CREATE_EXCEPTION(ConnectionLost, "Connection lost");
 		CREATE_EXCEPTION_MESSAGE(ReadError);
 		CREATE_EXCEPTION(BadPassword, "Bad password");
+		CREATE_EXCEPTION(QuitMessage, "QUIT message received");
 };
 
 #endif

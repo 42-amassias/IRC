@@ -6,7 +6,7 @@
 /*   By: ale-boud <ale-boud@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/28 01:58:52 by amassias          #+#    #+#             */
-/*   Updated: 2024/10/09 05:07:19 by ale-boud         ###   ########.fr       */
+/*   Updated: 2024/10/09 06:14:43 by ale-boud         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,6 +21,7 @@
 
 # include "Client.hpp"
 # include "ClientManager.hpp"
+# include "ChannelManager.hpp"
 
 # include "utils.hpp"
 
@@ -46,6 +47,7 @@ class Server
 		int		getPort(void) const;
 
 		static ClientManager	&getClientManager();
+		static ChannelManager	&getChannelManager();
 
 	private:
 		Server(void);
@@ -69,9 +71,12 @@ class Server
 		int							m_port;
 		sockaddr_in					m_sock_addr;
 		std::string					m_pwd;
+
 		std::vector<struct pollfd>	m_pollfds;
 		std::map<int, Client *>		m_clients;
 		ClientManager				m_client_manager;
+		ChannelManager				m_channel_manager;
+
 		volatile bool				m_running;
 		struct sigaction			m_old_sigint_action;
 		struct sigaction			m_old_sigterm_action;

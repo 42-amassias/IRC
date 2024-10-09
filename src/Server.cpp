@@ -6,7 +6,7 @@
 /*   By: ale-boud <ale-boud@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/28 01:58:44 by amassias          #+#    #+#             */
-/*   Updated: 2024/10/09 04:54:21 by ale-boud         ###   ########.fr       */
+/*   Updated: 2024/10/09 08:29:42 by ale-boud         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -62,6 +62,7 @@ Server::Server(void) :
 	m_pollfds(),
 	m_clients(),
 	m_client_manager(),
+	m_channel_manager(),
 	m_running(false)
 {
 }
@@ -240,6 +241,11 @@ void	Server::loop(void)
 					Log::Warn << ipv4FromSockaddr(c->getSockaddr()) << ": " << e.what() << std::endl;
 					removeConnection(it->fd);
 				}
+				catch (Client::QuitMessageException const& e)
+				{
+					Log::Debug << "Connection ended successfully with " << ipv4FromSockaddr(c->getSockaddr()) << std::endl;
+					removeConnection(it->fd);
+				}
 			}
 		}
 	}
@@ -270,6 +276,11 @@ int	Server::getPort(void) const
 ClientManager	&Server::getClientManager()
 {
 	return (getInstance().m_client_manager);
+}
+
+ChannelManager	&Server::getChannelManager()
+{
+	return (getInstance().m_channel_manager);
 }
 
 static void _handleSignal(
