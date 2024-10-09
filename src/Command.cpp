@@ -6,11 +6,12 @@
 /*   By: ale-boud <ale-boud@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/06 15:10:43 by ale-boud          #+#    #+#             */
-/*   Updated: 2024/10/09 03:17:28 by ale-boud         ###   ########.fr       */
+/*   Updated: 2024/10/09 20:21:16 by ale-boud         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include <iomanip>
+#include <algorithm>
 
 #include "Command.hpp"
 
@@ -124,8 +125,15 @@ std::vector<char>	Command::encode() const
 	ITERATE_CONST(std::vector<std::string>, m_parameters, pit)
 	{
 		encoded_cmd.push_back(' ');
-		if (pit->find(' ') != std::string::npos || pit->empty())
+		if ((pit->find(' ') != std::string::npos || pit->empty()) && (pit + 1 == m_parameters.end()))
 			encoded_cmd.push_back(':');
+		else if (pit->find(' ') != std::string::npos || pit->empty())
+		{
+			std::string	corrected(*pit);
+			std::replace(corrected.begin(), corrected.end(), ' ', '_');
+			encoded_cmd.insert(encoded_cmd.end(), corrected.begin(), corrected.end());
+			continue ;
+		}
 		encoded_cmd.insert(encoded_cmd.end(), pit->begin(), pit->end());
 	}
 	encoded_cmd.push_back('\r');

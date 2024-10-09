@@ -3,6 +3,7 @@
 
 # include <string>
 # include <set>
+# include <ctime>
 
 # include "Client.hpp"
 
@@ -18,14 +19,20 @@ class Channel
 
 		void	join(std::string const& chan_key, Client *client);
 		void	sendToAll(Command const& command, Client *sender);
+		void	sendToAll(Command const& command, Client *sender, std::set<Client *> &filter); // Update the filter to the sended clients
 
 		void	removeClient(Client *client); // Dont track freed data
 		bool	empty() const;
 
 		void	changeMode(std::string const& mode, std::string const& arg, Client *client);
 
+		std::string	const&	getTopic() const;
+		void				sendTopic(Client *client) const;
+		void				setTopic(std::string const& topic, Client *sender);
+
 	private:
 		Channel();
+		void	setTopic(std::string const& topic);
 		void	join(Client *client); // After validation
 		void	sendToAll(Command const& command);
 
@@ -38,6 +45,8 @@ class Channel
 
 		const std::string	m_chan_name;
 		std::string			m_topic;
+		std::string			m_topic_nick; // Last modifier
+		std::time_t			m_topic_setat; // Timestamp
 		std::set<Client *>	m_invited; // Invite list
 		std::set<Client *>	m_clients; // Must contain m_flag_o
 
@@ -51,6 +60,7 @@ class Channel
 		CREATE_EXCEPTION(InvalidModeFlag, "The given mode is not valid");
 		CREATE_EXCEPTION_MESSAGE(UnknownMode);
 		CREATE_EXCEPTION(RequireOper, "Not in the operator list");
+		CREATE_EXCEPTION(NotInChannel, "Requested user not in the clients list");
 
 };
 

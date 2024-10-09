@@ -6,7 +6,7 @@
 /*   By: ale-boud <ale-boud@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/06 14:16:08 by ale-boud          #+#    #+#             */
-/*   Updated: 2024/10/09 10:50:25 by ale-boud         ###   ########.fr       */
+/*   Updated: 2024/10/09 22:48:01 by ale-boud         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,6 +41,7 @@ Client::_logged_command_function_map[] = {
 	std::make_pair("OPER", &Client::execOPER),
 	std::make_pair("JOIN", &Client::execJOIN),
 	std::make_pair("QUIT", &Client::execQUIT),
+	std::make_pair("TOPIC", &Client::execTOPIC),
 	std::make_pair("MODE", &Client::execMODE),
 };
 
@@ -65,7 +66,7 @@ Client::Client(int fd, struct sockaddr const& addr) :
 Client::~Client(void)
 {
 	if (m_state == REGISTERED)
-		Server::getChannelManager().sendToAll(CREATE_COMMAND(getPrefix(), "QUIT", "Leaving like a rockstar"), this);
+		Server::getChannelManager().sendToAll(CREATE_COMMAND(getPrefix(), "QUIT", "Quit: Leaving like a rockstar"), this);
 	Server::getClientManager().removeClient(this);
 	Server::getChannelManager().removeClient(this);
 }
@@ -355,6 +356,11 @@ void	Client::execJOIN(Command const& command)
 				chan_key = "";
 			if (chan_name.empty())
 				continue ;
+			if (chan_name[0] != '#')
+			{
+				sendCommand(CREATE_ERR_BADCHANMASK(*this, chan_name));
+				continue ;
+			}
 			chan_name.erase(chan_name.begin());
 			try
 			{
@@ -384,6 +390,40 @@ void	Client::execQUIT(Command const& command)
 	Server::getChannelManager().sendToAll(c, this); // todo trim args
 	m_state = QUIT;
 	throw QuitMessageException();
+}
+
+void	Client::execTOPIC(Command const& command)
+{
+	std::vector<std::string> const&	params = command.getParameters();
+	if (params.size() < 1)
+		sendCommand(CREATE_ERR_NEEDMOREPARAMS(*this, command.getCommand()));
+	std::string	chan_name(params[0]);
+	if (chan_name.empty())
+		return ;
+	if (chan_name[0] != '#')
+	{
+		sendCommand(CREATE_ERR_BADCHANMASK(*this, chan_name));
+		return ;
+	}
+	chan_name.erase(chan_name.begin());
+	try
+	{
+		Channel	&chan = Server::getChannelManager().getChannel(chan_name);
+		if (params.size() == 1)
+		{
+			chan.sendTopic(this);
+			return ;
+		}
+		chan.setTopic(params[1], this);
+	}
+	catch (ChannelManager::DoesNotExistException const& e)
+	{
+		sendCommand(CREATE_ERR_NOSUCHCHANNEL(*this, "#" + chan_name));
+	}
+	catch (Channel::RequireOperException const& e)
+	{
+		sendCommand(CREATE_ERR_CHANOPRIVSNEEDED(*this, "#" + chan_name));
+	}
 }
 
 void	Client::execMODE(Command const& command)
@@ -424,6 +464,10 @@ void	Client::execMODE(Command const& command)
 		catch (Channel::NeedMoreParamsException const& e)
 		{
 			// sendCommand(CREATE_ERR_NEEDMOREPARAMS(*this, command.getCommand())); USE LESS
+		}
+		catch (Channel::NotInChannelException const& e)
+		{
+			sendCommand(CREATE_ERR_USERNOTINCHANNEL(*this, params[2], "#" + chan_name));
 		}
 	}
 }

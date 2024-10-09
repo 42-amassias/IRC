@@ -31,10 +31,12 @@ Channel	&ChannelManager::getChannel(std::string const& chan_name)
 
 void	ChannelManager::sendToAll(Command const& command, Client *client)
 {
+	std::set<Client *>	filter;
+	filter.insert(client);
 	for (std::map<std::string, Channel *>::iterator itr = (m_channels).begin(); itr != (m_channels).end(); ++itr)
 		try
 		{
-			itr->second->sendToAll(command, client);
+			itr->second->sendToAll(command, client, filter);
 		}
 		catch (Channel::NotRegisteredException const& e) { /* ignore */ }
 }
