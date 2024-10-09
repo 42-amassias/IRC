@@ -25,14 +25,14 @@ make_project()
 }
 
 make_project
-pkill ircserv
-./ircserv 6667 caca &
+ps aux | grep ircserv | grep valgrind | awk '{print$2}' | xargs kill
+valgrind ./ircserv 6667 caca &
 while inotifywait -e modify,close_write,move,move_self,create,delete,delete_self . $(find src include -type d)
 do
 	echo "${BLUE}Change detected reloading...${RESTORE}"
-	pkill ircserv
+	ps aux | grep ircserv | grep valgrind | awk '{print$2}' | xargs kill
 	sleep 1
 	rm ircserv
 	make_project
-	./ircserv 6667 caca &
+	valgrind ./ircserv 6667 caca &
 done

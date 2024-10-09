@@ -6,7 +6,7 @@
 /*   By: ale-boud <ale-boud@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/06 15:10:43 by ale-boud          #+#    #+#             */
-/*   Updated: 2024/10/09 02:03:52 by ale-boud         ###   ########.fr       */
+/*   Updated: 2024/10/09 03:17:28 by ale-boud         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -124,7 +124,7 @@ std::vector<char>	Command::encode() const
 	ITERATE_CONST(std::vector<std::string>, m_parameters, pit)
 	{
 		encoded_cmd.push_back(' ');
-		if (pit->find(' ') != std::string::npos)
+		if (pit->find(' ') != std::string::npos || pit->empty())
 			encoded_cmd.push_back(':');
 		encoded_cmd.insert(encoded_cmd.end(), pit->begin(), pit->end());
 	}
@@ -270,3 +270,7 @@ std::vector<std::string> const&	Command::getParameters() const
 	return m_parameters;
 }
 
+void	Command::setPrefix(std::string const& _prefix)
+{
+	m_prefix = _prefix;
+}

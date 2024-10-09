@@ -6,7 +6,7 @@
 /*   By: ale-boud <ale-boud@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/06 14:16:08 by ale-boud          #+#    #+#             */
-/*   Updated: 2024/10/09 01:49:28 by ale-boud         ###   ########.fr       */
+/*   Updated: 2024/10/09 04:19:59 by ale-boud         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,7 +18,8 @@
 #include "Client.hpp"
 #include "Server.hpp"
 
-#define ENCODE_SOURCE (m_nickname + "!" + m_username + "@" + ipv4FromSockaddr(m_addr))
+const std::string	Client::oper_username("john");
+const std::string	Client::oper_password("cena") ;
 
 const std::pair<std::string, void (Client::*)(Command const&)>
 Client::_command_function_map[] = {
@@ -35,6 +36,7 @@ Client::command_function_map(_command_function_map,
 const std::pair<std::string, void (Client::*)(Command const&)>
 Client::_logged_command_function_map[] = {
 	std::make_pair("PRIVMSG", &Client::execPRIVMSG),
+	std::make_pair("OPER", &Client::execOPER),
 };
 
 const std::map<std::string, void (Client::*)(Command const&)>
@@ -48,15 +50,11 @@ Client::Client(int fd, struct sockaddr const& addr) :
 	m_userpwd(),
 	m_state(LOGIN),
 	m_fd(fd),
+	m_isoperator(false),
 	m_addr(addr)
 {
 	Log::Info << "New connection : "
 		<< ipv4FromSockaddr(m_addr) << ":" << ntohs(((struct sockaddr_in *)&m_addr)->sin_port) << std::endl;
-}
-
-Client::Client(void) :
-	m_state(LOGIN)
-{
 }
 
 Client::~Client(void)
@@ -84,6 +82,11 @@ struct sockaddr const&	Client::getSockaddr(void) const
 	return (m_addr);
 }
 
+std::string	Client::getPrefix() const
+{
+	return (m_nickname + "!" + m_username + "@" + ipv4FromSockaddr(m_addr));
+}
+
 void	Client::setNickname(std::string const& s)
 {
 	m_nickname = s;
@@ -101,8 +104,14 @@ void	Client::setRealname(std::string const& s)
 
 bool	Client::isRegistered()
 {
-	return m_state;
+	return (m_state == REGISTERED);
 }
+
+bool	Client::isOperator()
+{
+	return (m_isoperator);
+}
+
 
 void	Client::receive(int fd)
 {
@@ -150,6 +159,8 @@ void	Client::execPendingCommands(void)
 				(this->*command_function_map.at(uc))(c);
 			else if (logged_command_function_map.count(uc) && m_state == REGISTERED)
 				(this->*logged_command_function_map.at(uc))(c);
+			else if (logged_command_function_map.count(uc) && m_state != REGISTERED)
+				sendCommand(CREATE_ERR_NOTREGISTERED(*this));
 			else
 				(this->*command_function_map.at(uc))(c); // THROW out_of_range tricks
 		}
@@ -164,9 +175,7 @@ void	Client::execPendingCommands(void)
 		catch (std::out_of_range const& e)
 		{
 			Log::Warn << "Unknown command : " << c.getCommand() << std::endl;
-			Command	_c;
-			CREATE_COMMAND_USER(_c, "", ERR_UNKNOWNCOMMAND, c.getCommand(), "Unknown command");
-			sendCommand(_c);
+			sendCommand(CREATE_ERR_UNKNOWNCOMMAND(*this, c.getCommand()));
 		}
 	}
 }
@@ -176,133 +185,101 @@ void	Client::welcome()
 	Command	c;
 	if (!Server::getInstance()->checkPwd(m_userpwd))
 	{
-		CREATE_COMMAND_USER(c, "", ERR_PASSWDMISMATCH, "Password incorrect");
-		sendCommand(c);
-		CREATE_COMMAND(c, "", "ERROR", "Closing link: " + ipv4FromSockaddr(m_addr) + " (Bad password)");
-		sendCommand(c);
+		sendCommand(CREATE_ERR_PASSWDMISMATCH(*this));
+		sendCommand(CREATE_COMMAND("", "ERROR", "Closing link: " + ipv4FromSockaddr(m_addr) + " (Bad password)"));
 		throw BadPasswordException();
 	}
 	if (Server::getInstance()->getClientManager().inUse(m_nickname))
 	{
-		CREATE_COMMAND_USER(c, "", ERR_NICKNAMEINUSE, m_nickname, "Nickname is already in use");
-		sendCommand(c);
+		sendCommand(CREATE_ERR_NICKNAMEINUSE(*this, m_nickname));
 		m_state = RETRY;
 		return ;
 	}
 	if (!usernickValidator(m_nickname))
 	{
-		CREATE_COMMAND_USER(c, "", ERR_ERRONEUSNICKNAME, "Erroneus nickname");
-		sendCommand(c);
+		sendCommand(CREATE_ERR_ERRONEUSNICKNAME(*this, m_nickname));
 		m_state = RETRY;
 		return ;
 	}
 	Server::getInstance()->getClientManager().addClient(this);
-	CREATE_COMMAND_USER(c, "", RPL_WELCOME, "Welcome to the best irc server bitch");
-	sendCommand(c);
+	sendCommand(CREATE_RPL_WELCOME(*this));
 	m_state = REGISTERED;
 }
 
 void	Client::execPRIVMSG(Command const& command)
 {
-	Command	c;
 	if (command.getParameters().size() < 2)
-	{
-		CREATE_COMMAND_USER(c, "", ERR_NEEDMOREPARAMS, "Not enough parameters");
-		sendCommand(c);
-		return ;
-	}
-	if (command.getParameters()[0][0] != '#')
+		sendCommand(CREATE_ERR_NEEDMOREPARAMS(*this, command.getCommand()));
+	else if (command.getParameters()[0].find(',') != std::string::npos)
+		sendCommand(CREATE_ERR_TOOMANYTARGETS(*this));
+	else if (command.getParameters()[0][0] != '#')
 	{
 		Client	*client = Server::getInstance()->getClientManager().getClient(command.getParameters()[0]);
 		if (client == NULL)
-		{
-			CREATE_COMMAND_USER(c, "", ERR_NOSUCHNICK, command.getParameters()[0], "No such nick/channel");
-			sendCommand(c);
-			return ;
-		}
-		CREATE_COMMAND(c, ENCODE_SOURCE, "PRIVMSG", command.getParameters()[0], command.getParameters()[1]);
-		client->sendCommand(c);
+			sendCommand(CREATE_ERR_NOSUCHNICK(*this, command.getParameters()[0]));
+		else
+			client->sendCommand(CREATE_COMMAND(getPrefix(), "PRIVMSG", command.getParameters()[0], command.getParameters()[1]));
 	}
 	else
 	{
-		
+		// TODO: channel
 	}
 }
 
 void	Client::execPASS(Command const& command)
 {
-	Command	c;
 	if (m_state != LOGIN)
-	{
-		CREATE_COMMAND_USER(c, "", ERR_ALREADYREGISTERED, "You may not reregister");
-		sendCommand(c);
-		return ;
-	}
+		sendCommand(CREATE_ERR_ALREADYREGISTERED(*this));
 	else if (command.getParameters().size() < 1)
-	{
-		CREATE_COMMAND_USER(c, "", ERR_NEEDMOREPARAMS, "Not enough parameters");
-		sendCommand(c);
-		return ;
-	}
-	m_userpwd = command.getParameters()[0];
+		sendCommand(CREATE_ERR_NEEDMOREPARAMS(*this, command.getCommand()));
+	else
+		m_userpwd = command.getParameters()[0];
 }
 
 void	Client::execNICK(Command const& command)
 {
-	Command	c;
 	if (command.getParameters().size() < 1)
-	{
-		CREATE_COMMAND_USER(c, "", ERR_NEEDMOREPARAMS, "Not enough parameters");
-		sendCommand(c);
-		return ;
-	}
-	// TODO: check in use
-	if (m_state == REGISTERED && Server::getInstance()->getClientManager().inUse(command.getParameters()[0]))
-	{
-		CREATE_COMMAND_USER(c, "", ERR_NICKNAMEINUSE, m_nickname, "Nickname is already in use");
-		sendCommand(c);
-		return ;
-	}
+		sendCommand(CREATE_ERR_NEEDMOREPARAMS(*this, command.getCommand()));
 	else if (m_state == REGISTERED && !usernickValidator(command.getParameters()[0]))
+		sendCommand(CREATE_ERR_ERRONEUSNICKNAME(*this, command.getParameters()[0]));
+	else if (m_state == REGISTERED && Server::getInstance()->getClientManager().inUse(command.getParameters()[0]))
+		sendCommand(CREATE_ERR_NICKNAMEINUSE(*this, command.getParameters()[0]));
+	else
 	{
-		CREATE_COMMAND_USER(c, "", ERR_ERRONEUSNICKNAME, "Erroneus nickname");
-		sendCommand(c);
-		return ;
+		m_nickname = command.getParameters()[0];
+		if (m_state == RETRY)
+			welcome();
 	}
-	m_nickname = command.getParameters()[0];
-	if (m_state == RETRY)
-		welcome();
 }
 
 void	Client::execUSER(Command const& command)
 {
-	Command	c;
 	if (m_state != LOGIN)
+		sendCommand(CREATE_ERR_ALREADYREGISTERED(*this));
+	else if (command.getParameters().size() < 4)
+		sendCommand(CREATE_ERR_NEEDMOREPARAMS(*this, command.getCommand()));
+	else
 	{
-		CREATE_COMMAND_USER(c, "", ERR_ALREADYREGISTERED, "You may not reregister");
-		sendCommand(c);
-		return ;
+		m_username = command.getParameters()[0];
+		m_realname = command.getParameters()[3];
+		welcome();
 	}
-	if (command.getParameters().size() < 4)
-	{
-		CREATE_COMMAND_USER(c, "", ERR_NEEDMOREPARAMS, "Not enough parameters");
-		sendCommand(c);
-		return ;
-	}
-	m_username = command.getParameters()[0];
-	m_realname = command.getParameters()[3];
-	welcome();
 }
 
 void	Client::execPING(Command const& command)
 {
-	Command	c;
 	if (command.getParameters().size() < 1)
-	{
-		CREATE_COMMAND_USER(c, "", ERR_NOORIGIN, "No origin specified");
-		sendCommand(c);
-		return ;
-	}
-	CREATE_COMMAND(c, "", "PONG", "localhost", command.getParameters()[0]);
-	sendCommand(c);
+		sendCommand(CREATE_ERR_NOORIGIN(*this));
+	else
+		sendCommand(CREATE_COMMAND("", "PONG", "localhost", command.getParameters()[0]));
+}
+
+void	Client::execOPER(Command const& command)
+{
+	if (command.getParameters().size() < 2)
+		sendCommand(CREATE_ERR_NEEDMOREPARAMS(*this, command.getCommand()));
+	else if (command.getParameters()[0] != oper_username || command.getParameters()[1] != oper_password)
+		sendCommand(CREATE_ERR_PASSWDMISMATCH(*this));
+	else
+		m_isoperator = true;
 }
