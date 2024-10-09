@@ -15,6 +15,7 @@ class ClientManager
 		void	removeClient(Client *client);
 
 		bool	inUse(std::string const& nickname) const;
+		Client	*getClient(std::string const& nickname);
 
 	private:
 		std::set<Client *>	m_logged_clients;

@@ -6,7 +6,7 @@
 /*   By: ale-boud <ale-boud@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/28 01:58:54 by amassias          #+#    #+#             */
-/*   Updated: 2024/10/08 18:22:38 by ale-boud         ###   ########.fr       */
+/*   Updated: 2024/10/09 01:03:11 by ale-boud         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -71,8 +71,11 @@ class Client
 
 		static const int	default_read_size = 1024;
 		static const std::map<std::string, void (Client::*)(Command const&)>	command_function_map;
+		static const std::map<std::string, void (Client::*)(Command const&)>	logged_command_function_map;
 		static const std::pair<std::string, void (Client::*)(Command const&)>
 			_command_function_map[];
+		static const std::pair<std::string, void (Client::*)(Command const&)>
+			_logged_command_function_map[];
 
 	public:
 		

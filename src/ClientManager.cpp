@@ -14,13 +14,13 @@ ClientManager::~ClientManager()
 
 void	ClientManager::addClient(Client *client)
 {
-	Log::Info << "New client logged : " << client->getNickname() << std::endl;
+	Log::Debug << "New client logged : " << client->getNickname() << std::endl;
 	m_logged_clients.insert(client);
 }
 
 void	ClientManager::removeClient(Client *client)
 {
-	Log::Info << "Removed client : " << client->getNickname() << std::endl;
+	Log::Debug << "Removed client : " << client->getNickname() << std::endl;
 	m_logged_clients.erase(client);
 }
 
@@ -30,4 +30,13 @@ bool	ClientManager::inUse(std::string const& nickname) const
 		if ((*itr)->getNickname() == nickname)
 			return (true);
 	return (false);
+}
+
+
+Client	*ClientManager::getClient(std::string const& nickname)
+{
+	ITERATE(std::set<Client *>, m_logged_clients, itr)
+		if ((*itr)->getNickname() == nickname)
+			return (*itr);
+	return (NULL);
 }
