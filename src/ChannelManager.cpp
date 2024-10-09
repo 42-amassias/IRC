@@ -41,6 +41,15 @@ void	ChannelManager::sendToAll(Command const& command, Client *client)
 
 void	ChannelManager::removeClient(Client *client)
 {
-	for (std::map<std::string, Channel *>::iterator itr = (m_channels).begin(); itr != (m_channels).end(); ++itr)
+	for (std::map<std::string, Channel *>::iterator itr = (m_channels).begin(); itr != (m_channels).end();)
+	{
 		itr->second->removeClient(client);
+		if (itr->second->empty())
+		{
+			delete itr->second;
+			m_channels.erase(itr++);
+		}
+		else
+			++itr;
+	}
 }

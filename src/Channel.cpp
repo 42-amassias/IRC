@@ -21,6 +21,11 @@ Channel::Channel(std::string const& name, Client *owner) :
 	join(owner);
 }
 
+Channel::~Channel()
+{
+	Log::Debug << "#" + m_chan_name << " channel deleted beceause of no one is connected" << std::endl;
+}
+
 void	Channel::join(std::string const& chan_key, Client *client)
 {
 	if (!m_flag_k.empty() && m_flag_k != chan_key)
@@ -45,6 +50,11 @@ void	Channel::removeClient(Client *client)
 	m_clients.erase(client);
 	m_invited.erase(client);
 	m_flag_o.erase(client);
+}
+
+bool	Channel::empty() const
+{
+	return (m_flag_o.empty() && m_clients.empty());
 }
 
 void	Channel::sendToAll(Command const& command, Client *sender)

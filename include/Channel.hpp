@@ -14,11 +14,13 @@ class Channel
 {
 	public:
 		Channel(std::string const& name, Client *owner);
+		~Channel();
 
 		void	join(std::string const& chan_key, Client *client);
 		void	sendToAll(Command const& command, Client *sender);
 
 		void	removeClient(Client *client); // Dont track freed data
+		bool	empty() const;
 
 	private:
 		Channel();
