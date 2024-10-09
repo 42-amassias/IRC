@@ -6,7 +6,7 @@
 /*   By: ale-boud <ale-boud@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/28 01:58:54 by amassias          #+#    #+#             */
-/*   Updated: 2024/10/09 04:07:29 by ale-boud         ###   ########.fr       */
+/*   Updated: 2024/10/09 05:13:29 by ale-boud         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -55,12 +55,15 @@ class Client
 
 		void		welcome();
 
-		void		execPRIVMSG(Command const& command);
 		void		execPASS(Command const& command);
 		void		execNICK(Command const& command);
 		void		execUSER(Command const& command);
 		void		execPING(Command const& command);
+
+		void		execPRIVMSG(Command const& command);
+		void		execNOTICE(Command const& command);
 		void		execOPER(Command const& command);
+		void		execJOIN(Command const& command);
 
 	private:
 		std::string		m_nickname;

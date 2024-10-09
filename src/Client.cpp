@@ -6,7 +6,7 @@
 /*   By: ale-boud <ale-boud@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/06 14:16:08 by ale-boud          #+#    #+#             */
-/*   Updated: 2024/10/09 04:55:20 by ale-boud         ###   ########.fr       */
+/*   Updated: 2024/10/09 05:31:17 by ale-boud         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,7 +36,9 @@ Client::command_function_map(_command_function_map,
 const std::pair<std::string, void (Client::*)(Command const&)>
 Client::_logged_command_function_map[] = {
 	std::make_pair("PRIVMSG", &Client::execPRIVMSG),
+	std::make_pair("NOTICE", &Client::execNOTICE),
 	std::make_pair("OPER", &Client::execOPER),
+	std::make_pair("JOIN", &Client::execJOIN),
 };
 
 const std::map<std::string, void (Client::*)(Command const&)>
@@ -226,6 +228,27 @@ void	Client::execPRIVMSG(Command const& command)
 	}
 }
 
+// same as privmsg without sending any reply back
+void	Client::execNOTICE(Command const& command)
+{
+	if (command.getParameters().size() < 2)
+		return ;
+	else if (command.getParameters()[0].find(',') != std::string::npos)
+		return ;
+	else if (command.getParameters()[0][0] != '#')
+	{
+		Client	*client = Server::getClientManager().getClient(command.getParameters()[0]);
+		if (client == NULL)
+			return ;
+		else
+			client->sendCommand(CREATE_COMMAND(getPrefix(), "NOTICE", command.getParameters()[0], command.getParameters()[1]));
+	}
+	else
+	{
+		// TODO: channel ???
+	}
+}
+
 void	Client::execPASS(Command const& command)
 {
 	if (m_state != LOGIN)
@@ -281,5 +304,15 @@ void	Client::execOPER(Command const& command)
 	else if (command.getParameters()[0] != oper_username || command.getParameters()[1] != oper_password)
 		sendCommand(CREATE_ERR_PASSWDMISMATCH(*this));
 	else
+	{
+		sendCommand(CREATE_RPL_YOUREOPER(*this));
+		if (!m_isoperator)
+			Server::getClientManager().sendAll(CREATE_COMMAND(getPrefix(), "MODE", "+o", m_nickname));
 		m_isoperator = true;
+	}
+}
+
+void	Client::execJOIN(Command const& command)
+{
+	
 }

@@ -39,3 +39,10 @@ Client	*ClientManager::getClient(std::string const& nickname)
 			return (*itr);
 	return (NULL);
 }
+
+void	ClientManager::sendAll(Command const& command)
+{
+	ITERATE(std::set<Client *>, m_logged_clients, itr)
+		(*itr)->sendCommand(command);
+}
+
