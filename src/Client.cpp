@@ -6,7 +6,7 @@
 /*   By: ale-boud <ale-boud@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/06 14:16:08 by ale-boud          #+#    #+#             */
-/*   Updated: 2024/10/09 08:38:25 by ale-boud         ###   ########.fr       */
+/*   Updated: 2024/10/09 10:50:25 by ale-boud         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,6 +41,7 @@ Client::_logged_command_function_map[] = {
 	std::make_pair("OPER", &Client::execOPER),
 	std::make_pair("JOIN", &Client::execJOIN),
 	std::make_pair("QUIT", &Client::execQUIT),
+	std::make_pair("MODE", &Client::execMODE),
 };
 
 const std::map<std::string, void (Client::*)(Command const&)>
@@ -244,7 +245,7 @@ void	Client::execPRIVMSG(Command const& command)
 		}
 		catch (Channel::NotRegisteredException const& e)
 		{
-			sendCommand(CREATE_ERR_CANNOTSENDTOCHAN(*this, "#" + chan_name));
+			sendCommand(CREATE_ERR_NOTONCHANNEL(*this, "#" + chan_name));
 		}
 		catch (std::exception const& e)
 		{
@@ -383,4 +384,46 @@ void	Client::execQUIT(Command const& command)
 	Server::getChannelManager().sendToAll(c, this); // todo trim args
 	m_state = QUIT;
 	throw QuitMessageException();
+}
+
+void	Client::execMODE(Command const& command)
+{
+	std::vector<std::string> const	&params = command.getParameters();
+	if (params.size() < 2 || params[0].empty()) // TODO : size == 1 (MODE get info)
+		sendCommand(CREATE_ERR_NEEDMOREPARAMS(*this, command.getCommand()));
+	else
+	{
+		std::string	chan_name(params[0]);
+		if (chan_name[0] != '#')
+			return ;
+		chan_name.erase(chan_name.begin());
+		try
+		{
+			Server::getChannelManager().getChannel(chan_name).changeMode(params[1], params.size() >= 3 ? params[2] : "", this);
+		}
+		catch (ChannelManager::DoesNotExistException const& e)
+		{
+			sendCommand(CREATE_ERR_NOSUCHCHANNEL(*this, "#" + chan_name));
+		}
+		catch (Channel::InvalidModeFlagException const& e)
+		{
+			sendCommand(CREATE_ERR_UMODEUNKNOWNFLAG(*this));
+		}
+		catch (Channel::UnknownModeException const& e)
+		{
+			sendCommand(CREATE_ERR_UNKNOWNMODE(*this, e.what()));
+		}
+		catch (Channel::NotRegisteredException const& e)
+		{
+			sendCommand(CREATE_ERR_NOTONCHANNEL(*this, "#" + chan_name));
+		}
+		catch (Channel::RequireOperException const& e)
+		{
+			sendCommand(CREATE_ERR_CHANOPRIVSNEEDED(*this, "#" + chan_name));
+		}
+		catch (Channel::NeedMoreParamsException const& e)
+		{
+			// sendCommand(CREATE_ERR_NEEDMOREPARAMS(*this, command.getCommand())); USE LESS
+		}
+	}
 }

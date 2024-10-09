@@ -66,6 +66,63 @@ void	Channel::sendToAll(Command const& command, Client *sender)
 			(*itr)->sendCommand(command);
 }
 
+void	Channel::changeMode(std::string const& mode, std::string const& arg, Client *client)
+{
+	if (!m_clients.count(client))
+		throw NotRegisteredException();
+	if (mode.size() != 2 || (mode[0] != '-' && mode[0] != '+'))
+		throw InvalidModeFlagException();
+	// We can parse
+	if (!m_flag_o.count(client))
+		throw RequireOperException();
+	else if (mode == "+k" && arg.empty())
+		throw NeedMoreParamsException();
+	else if (mode == "+k")
+		m_flag_k = arg;
+	else if (mode == "-k")
+		m_flag_k.clear();
+	else if (mode == "-i")
+	{
+		m_flag_i = false;
+		m_invited.clear();
+	}
+	else if (mode == "+i")
+		m_flag_i = true;
+	else if (mode == "+o")
+	{
+		ITERATE(std::set<Client *>, m_clients, itr)
+			if ((*itr)->getNickname() == arg)
+			{
+				if (!m_flag_o.count((*itr))) // Not already op ?
+				{
+					m_flag_o.insert((*itr));
+					sendToAll(CREATE_COMMAND(client->getPrefix(), "MODE", "#" + m_chan_name, "+o", arg));
+				}
+				break ;
+			}
+	}
+	else if (mode == "-o")
+	{
+		ITERATE(std::set<Client *>, m_clients, itr)
+			if ((*itr)->getNickname() == arg)
+			{
+				if (m_flag_o.count((*itr))) // Already op ?
+				{
+					m_flag_o.erase((*itr));
+					sendToAll(CREATE_COMMAND(client->getPrefix(), "MODE", "#" + m_chan_name, "-o", arg));
+				}
+				break ;
+			}
+	}
+	else if (mode == "+t")
+		m_flag_t = true;
+	else if (mode == "-t")
+		m_flag_t = false;
+	else
+		throw UnknownModeException(mode.c_str() + 1);
+
+}
+
 void	Channel::join(Client *client)
 {
 	m_clients.insert(client);

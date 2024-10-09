@@ -6,7 +6,7 @@
 /*   By: ale-boud <ale-boud@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/06 15:11:01 by ale-boud          #+#    #+#             */
-/*   Updated: 2024/10/09 08:52:08 by ale-boud         ###   ########.fr       */
+/*   Updated: 2024/10/09 10:16:58 by ale-boud         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -68,6 +68,10 @@
 # define CREATE_ERR_INVITEONLYCHAN(client, chan_name) (CREATE_ERR(client, ERR_INVITEONLYCHAN, (chan_name), "Cannot join channel (+i)"))
 # define CREATE_ERR_CHANNELISFULL(client, chan_name) (CREATE_ERR(client, ERR_CHANNELISFULL, (chan_name), "Cannot join channel (+l)"))
 # define CREATE_ERR_CANNOTSENDTOCHAN(client, chan_name) (CREATE_ERR(client, ERR_CANNOTSENDTOCHAN, (chan_name), "Cannot sent to channel"))
+# define CREATE_ERR_CHANOPRIVSNEEDED(client, chan_name) (CREATE_ERR(client, ERR_CHANOPRIVSNEEDED, (chan_name), "You're not channel operator"))
+# define CREATE_ERR_NOTONCHANNEL(client, chan_name) (CREATE_ERR(client, ERR_NOTONCHANNEL, (chan_name), "You're not on that channel"))
+# define CREATE_ERR_UMODEUNKNOWNFLAG(client) (CREATE_ERR(client, ERR_UMODEUNKNOWNFLAG, "Unknown MODE flag"))
+# define CREATE_ERR_UNKNOWNMODE(client, mode) (CREATE_ERR(client, ERR_UNKNOWNMODE, (mode), "is unknown mode char to me"))
 
 # define CREATE_RPL_WELCOME(client) (CREATE_COMMAND("", RPL_WELCOME, (client).getNickname(), WELCOME_MESSAGE))
 # define CREATE_RPL_YOUREOPER(client) (CREATE_COMMAND("", RPL_YOUREOPER, (client).getNickname(), "You are now an IRC operator"))
@@ -90,7 +94,11 @@ enum	irc_errcode {
 	ERR_CHANNELISFULL=471,
 	ERR_CANNOTSENDTOCHAN=404,
 	ERR_INVITEONLYCHAN=473,
+	ERR_CHANOPRIVSNEEDED=482,
+	ERR_NOTONCHANNEL=442,
 	ERR_NOSUCHNICK=401,
+	ERR_UNKNOWNMODE=472,
+	ERR_UMODEUNKNOWNFLAG=501,
 };
 
 enum	irc_rplcode {

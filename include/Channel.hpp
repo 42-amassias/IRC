@@ -22,6 +22,8 @@ class Channel
 		void	removeClient(Client *client); // Dont track freed data
 		bool	empty() const;
 
+		void	changeMode(std::string const& mode, std::string const& arg, Client *client);
+
 	private:
 		Channel();
 		void	join(Client *client); // After validation
@@ -45,6 +47,10 @@ class Channel
 		CREATE_EXCEPTION(NotInvited, "Not on the invite list");
 		CREATE_EXCEPTION(ChannelFull, "The channel is full");
 		CREATE_EXCEPTION(NotRegistered, "Not in the current connected user channel");
+		CREATE_EXCEPTION(NeedMoreParams, "Need more params for the mode change");
+		CREATE_EXCEPTION(InvalidModeFlag, "The given mode is not valid");
+		CREATE_EXCEPTION_MESSAGE(UnknownMode);
+		CREATE_EXCEPTION(RequireOper, "Not in the operator list");
 
 };
 
