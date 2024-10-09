@@ -6,7 +6,7 @@
 /*   By: ale-boud <ale-boud@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/28 01:58:44 by amassias          #+#    #+#             */
-/*   Updated: 2024/10/08 16:33:09 by ale-boud         ###   ########.fr       */
+/*   Updated: 2024/10/09 04:54:21 by ale-boud         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,11 +36,11 @@ static void _handleSignal(
 
 Server*	Server::s_server_instance_ptr = NULL;
 
-Server*	Server::getInstance(void)
+Server	&Server::getInstance(void)
 {
 	if (s_server_instance_ptr == NULL)
 		s_server_instance_ptr = new Server();
-	return (s_server_instance_ptr);
+	return (*s_server_instance_ptr);
 }
 
 void	Server::destroyInstance(void)
@@ -269,7 +269,7 @@ int	Server::getPort(void) const
 
 ClientManager	&Server::getClientManager()
 {
-	return (m_client_manager);
+	return (getInstance().m_client_manager);
 }
 
 static void _handleSignal(
@@ -278,7 +278,7 @@ static void _handleSignal(
 {
 	(void)signal;
 	Log::Debug << "SIGNAL RECEIVED : " << signal << std::endl;
-	Server::getInstance()->stop();
+	Server::getInstance().stop();
 }
 
 static void	_setSigAction(

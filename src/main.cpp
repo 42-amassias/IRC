@@ -47,10 +47,10 @@ int	main(int argc, char **argv)
 	const int	port = atoi(argv[PROG_PORT]);
 	try
 	{
-		Server::getInstance()->setPwd(argv[PROG_PWD]);
-		Server::getInstance()->setPort(port);
-		Server::getInstance()->init();
-		Server::getInstance()->loop();
+		Server::getInstance().setPwd(argv[PROG_PWD]);
+		Server::getInstance().setPort(port);
+		Server::getInstance().init();
+		Server::getInstance().loop();
 		Server::destroyInstance();
 	} catch (const std::exception &e)
 	{

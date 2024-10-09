@@ -6,7 +6,7 @@
 /*   By: ale-boud <ale-boud@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/28 01:58:52 by amassias          #+#    #+#             */
-/*   Updated: 2024/10/08 16:32:38 by ale-boud         ###   ########.fr       */
+/*   Updated: 2024/10/09 04:53:38 by ale-boud         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,7 +32,7 @@ class Server
 	public:
 		~Server(void);
 
-		static Server*	getInstance(void);
+		static Server	&getInstance(void);
 		static void		destroyInstance(void);
 
 		void	init(void);
@@ -45,7 +45,7 @@ class Server
 		void	setPort(int port);
 		int		getPort(void) const;
 
-		ClientManager	&getClientManager();
+		static ClientManager	&getClientManager();
 
 	private:
 		Server(void);

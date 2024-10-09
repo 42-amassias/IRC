@@ -6,7 +6,7 @@
 /*   By: ale-boud <ale-boud@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/06 14:16:08 by ale-boud          #+#    #+#             */
-/*   Updated: 2024/10/09 04:19:59 by ale-boud         ###   ########.fr       */
+/*   Updated: 2024/10/09 04:55:20 by ale-boud         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -59,7 +59,7 @@ Client::Client(int fd, struct sockaddr const& addr) :
 
 Client::~Client(void)
 {
-	Server::getInstance()->getClientManager().removeClient(this);
+	Server::getClientManager().removeClient(this);
 }
 
 std::string const&	Client::getNickname(void) const
@@ -112,7 +112,6 @@ bool	Client::isOperator()
 	return (m_isoperator);
 }
 
-
 void	Client::receive(int fd)
 {
 	char	buf[default_read_size];
@@ -138,6 +137,7 @@ void	Client::sendCommand(Command const& command)
 	ITERATE_CONST(std::vector<char>, data, itr)
 		os << *itr;
 	os.flush();
+	// TODO unblocked send
 	send(m_fd, data.data(), data.size(), 0);
 }
 
@@ -183,13 +183,13 @@ void	Client::execPendingCommands(void)
 void	Client::welcome()
 {
 	Command	c;
-	if (!Server::getInstance()->checkPwd(m_userpwd))
+	if (!Server::getInstance().checkPwd(m_userpwd))
 	{
 		sendCommand(CREATE_ERR_PASSWDMISMATCH(*this));
 		sendCommand(CREATE_COMMAND("", "ERROR", "Closing link: " + ipv4FromSockaddr(m_addr) + " (Bad password)"));
 		throw BadPasswordException();
 	}
-	if (Server::getInstance()->getClientManager().inUse(m_nickname))
+	if (Server::getClientManager().inUse(m_nickname))
 	{
 		sendCommand(CREATE_ERR_NICKNAMEINUSE(*this, m_nickname));
 		m_state = RETRY;
@@ -201,7 +201,7 @@ void	Client::welcome()
 		m_state = RETRY;
 		return ;
 	}
-	Server::getInstance()->getClientManager().addClient(this);
+	Server::getClientManager().addClient(this);
 	sendCommand(CREATE_RPL_WELCOME(*this));
 	m_state = REGISTERED;
 }
@@ -214,7 +214,7 @@ void	Client::execPRIVMSG(Command const& command)
 		sendCommand(CREATE_ERR_TOOMANYTARGETS(*this));
 	else if (command.getParameters()[0][0] != '#')
 	{
-		Client	*client = Server::getInstance()->getClientManager().getClient(command.getParameters()[0]);
+		Client	*client = Server::getClientManager().getClient(command.getParameters()[0]);
 		if (client == NULL)
 			sendCommand(CREATE_ERR_NOSUCHNICK(*this, command.getParameters()[0]));
 		else
@@ -242,7 +242,7 @@ void	Client::execNICK(Command const& command)
 		sendCommand(CREATE_ERR_NEEDMOREPARAMS(*this, command.getCommand()));
 	else if (m_state == REGISTERED && !usernickValidator(command.getParameters()[0]))
 		sendCommand(CREATE_ERR_ERRONEUSNICKNAME(*this, command.getParameters()[0]));
-	else if (m_state == REGISTERED && Server::getInstance()->getClientManager().inUse(command.getParameters()[0]))
+	else if (m_state == REGISTERED && Server::getClientManager().inUse(command.getParameters()[0]))
 		sendCommand(CREATE_ERR_NICKNAMEINUSE(*this, command.getParameters()[0]));
 	else
 	{
