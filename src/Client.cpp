@@ -6,7 +6,7 @@
 /*   By: ale-boud <ale-boud@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/06 14:16:08 by ale-boud          #+#    #+#             */
-/*   Updated: 2024/10/10 14:15:09 by ale-boud         ###   ########.fr       */
+/*   Updated: 2024/10/10 14:43:22 by ale-boud         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -454,10 +454,15 @@ void	Client::execJOIN(Command const& command)
 
 void	Client::execQUIT(Command const& command)
 {
-	Command	c(command);
+	std::vector<std::string>	params(command.getParameters());
 
-	c.setPrefix(getPrefix());
-	Server::getChannelManager().sendToAll(c, this); // todo trim args
+	if (params.size() > 1)
+		params.erase(params.begin()+1, params.end());
+	if (params.size() >= 1)
+		params[0] = "Quit: " + params[0];
+	else
+		params.push_back("Quit: leaving");
+	Server::getChannelManager().sendToAll(Command(getPrefix(), "QUIT", params), this); // todo trim args
 	m_state = QUIT;
 	throw QuitMessageException();
 }

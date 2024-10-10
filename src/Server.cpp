@@ -6,7 +6,7 @@
 /*   By: ale-boud <ale-boud@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/28 01:58:44 by amassias          #+#    #+#             */
-/*   Updated: 2024/10/10 14:14:39 by ale-boud         ###   ########.fr       */
+/*   Updated: 2024/10/10 14:39:04 by ale-boud         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -229,7 +229,12 @@ void	Server::loop(void)
 					}
 					catch (Client::ConnectionLostException const& e)
 					{
-						c->execPendingCommands();
+						try
+						{
+							c->sendPendingCommand();
+						}
+						catch (std::exception const& e)
+						{}
 						Log::Info << ipv4FromSockaddr(c->getSockaddr()) << " disconnected" << std::endl;
 						removeConnection(it->fd);
 					}
@@ -243,6 +248,7 @@ void	Server::loop(void)
 				catch (Client::BadPasswordException const& e)
 				{
 					Log::Warn << ipv4FromSockaddr(c->getSockaddr()) << ": " << e.what() << std::endl;
+					c->sendPendingCommand();
 					removeConnection(it->fd);
 				}
 				catch (Client::QuitMessageException const& e)
