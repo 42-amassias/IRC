@@ -6,7 +6,7 @@
 /*   By: ale-boud <ale-boud@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/06 15:10:43 by ale-boud          #+#    #+#             */
-/*   Updated: 2024/10/10 06:45:47 by ale-boud         ###   ########.fr       */
+/*   Updated: 2024/10/10 13:09:54 by ale-boud         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -255,7 +255,7 @@ void	_extract_params(
 		return ;
 	_skip_spaces(itr, end);
 	if (itr == end)
-		throw Command::InvalidCommandException("Params: missing data");
+		return ;
 	if (*itr == ':')
 	{
 		++itr;
