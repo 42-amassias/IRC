@@ -6,7 +6,7 @@
 /*   By: ale-boud <ale-boud@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/06 14:16:08 by ale-boud          #+#    #+#             */
-/*   Updated: 2024/10/10 07:37:10 by ale-boud         ###   ########.fr       */
+/*   Updated: 2024/10/10 12:38:04 by ale-boud         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -551,7 +551,8 @@ void	Client::execMODE(Command const& command)
 		std::string	chan_name(params[0]);
 		if (chan_name[0] != '#')
 			return ;
-		chan_name.erase(chan_name.begin());try
+		chan_name.erase(chan_name.begin());
+		try
 		{
 			Channel	&chan = Server::getChannelManager().getChannel(chan_name);
 			sendCommand(chan.getModeCommand());
