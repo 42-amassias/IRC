@@ -6,7 +6,7 @@
 /*   By: ale-boud <ale-boud@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/28 01:58:54 by amassias          #+#    #+#             */
-/*   Updated: 2024/10/10 07:08:30 by ale-boud         ###   ########.fr       */
+/*   Updated: 2024/10/10 13:46:18 by ale-boud         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -43,6 +43,7 @@ class Client
 		void		execPendingCommands(void);
 
 		void		sendCommand(Command const& command);
+		void		sendPendingCommand();
 
 		enum client_state {
 			LOGIN,
@@ -81,7 +82,8 @@ class Client
 		int				m_fd;
 		bool			m_isoperator;
 		struct sockaddr	m_addr;
-		CommandBuffer	m_buffer;
+		CommandBuffer	m_read_buffer;
+		std::vector<char>	m_write_buffer;
 
 		static const int	default_read_size = 1024;
 		static const std::map<std::string, void (Client::*)(Command const&)>	command_function_map;
@@ -98,6 +100,7 @@ class Client
 		
 		CREATE_EXCEPTION(ConnectionLost, "Connection lost");
 		CREATE_EXCEPTION_MESSAGE(ReadError);
+		CREATE_EXCEPTION_MESSAGE(WriteError);
 		CREATE_EXCEPTION(BadPassword, "Bad password");
 		CREATE_EXCEPTION(QuitMessage, "QUIT message received");
 };

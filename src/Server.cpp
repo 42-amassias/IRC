@@ -6,7 +6,7 @@
 /*   By: ale-boud <ale-boud@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/28 01:58:44 by amassias          #+#    #+#             */
-/*   Updated: 2024/10/10 04:36:41 by ale-boud         ###   ########.fr       */
+/*   Updated: 2024/10/10 14:14:39 by ale-boud         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -161,11 +161,12 @@ void	Server::removeConnection(int fd)
 	close(fd);
 	m_clients.erase(fd);
 	for (std::vector<struct pollfd>::iterator _it = (m_pollfds).begin();
-			_it != (m_pollfds).end();)
+			_it != (m_pollfds).end(); ++_it)
 		if (_it->fd == fd)
+		{
 			_it = m_pollfds.erase(_it);
-		else
-			++_it;
+			break ;
+		}
 }
 
 void	Server::init(void)
@@ -212,11 +213,11 @@ void	Server::loop(void)
 		{
 			if (it->revents == 0)
 				continue ;
-			if ((it->revents & POLLIN) == 0) // WTF dude ?
+			if ((it->revents & (POLLIN | POLLOUT)) == 0) // WTF dude ?
 				throw SocketFailureException("Incoherent revents on a pollfd");
 			if (it->fd == m_socket_fd) // Server event
 				acceptConnections();
-			else // Client event
+			else if ((it->revents & POLLIN) != 0) // Client event
 			{
 				Client	*c = m_clients.at(it->fd);
 				try
@@ -247,6 +248,25 @@ void	Server::loop(void)
 				catch (Client::QuitMessageException const& e)
 				{
 					Log::Debug << "Connection ended successfully with " << ipv4FromSockaddr(c->getSockaddr()) << std::endl;
+					removeConnection(it->fd);
+				}
+			}
+			else if ((it->revents & POLLOUT) != 0)
+			{
+				Client	*c = m_clients.at(it->fd);
+				try
+				{
+					c->sendPendingCommand();
+				}
+				catch (Client::ConnectionLostException const& e)
+				{
+					Log::Info << ipv4FromSockaddr(c->getSockaddr()) << " disconnected" << std::endl;
+					removeConnection(it->fd);
+				}
+				catch (Client::WriteErrorException const& e)
+				{
+					Log::Warn << "Connection lost due to a write error with "
+						<< ipv4FromSockaddr(c->getSockaddr()) << ": " << e.what() << std::endl;
 					removeConnection(it->fd);
 				}
 			}
@@ -284,6 +304,34 @@ ClientManager	&Server::getClientManager()
 ChannelManager	&Server::getChannelManager()
 {
 	return (getInstance().m_channel_manager);
+}
+
+void	Server::hasPendingSend(int fd)
+{
+	std::vector<struct pollfd>::iterator	itr = m_pollfds.begin();
+	while (itr != m_pollfds.end())
+	{
+		if (itr->fd == fd)
+			break ;
+		++itr;
+	}
+	if (itr == m_pollfds.end())
+		return ;
+	itr->events = itr->events | POLLOUT;
+}
+
+void	Server::noPendingSend(int fd)
+{
+	std::vector<struct pollfd>::iterator	itr = m_pollfds.begin();
+	while (itr != m_pollfds.end())
+	{
+		if (itr->fd == fd)
+			break ;
+		++itr;
+	}
+	if (itr == m_pollfds.end())
+		return ;
+	itr->events = itr->events & (~POLLOUT);
 }
 
 static void _handleSignal(

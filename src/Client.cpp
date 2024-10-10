@@ -6,7 +6,7 @@
 /*   By: ale-boud <ale-boud@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/06 14:16:08 by ale-boud          #+#    #+#             */
-/*   Updated: 2024/10/10 12:38:04 by ale-boud         ###   ########.fr       */
+/*   Updated: 2024/10/10 14:15:09 by ale-boud         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -134,11 +134,11 @@ void	Client::receive(int fd)
 		// Log::Info << "recv() == " << ret << std::endl;
 		if (ret == 0 || (ret <= 0 && errno == ECONNRESET))
 			throw ConnectionLostException();
-		else if (ret <= 0 && errno == EWOULDBLOCK)
+		else if (ret <= 0 && errno == EAGAIN)
 			break ;
 		else if (ret <= 0)
 			throw ReadErrorException(std::strerror(errno));
-		m_buffer.pushBack(buf, ret);
+		m_read_buffer.pushBack(buf, ret);
 	}
 }
 
@@ -146,12 +146,30 @@ void	Client::sendCommand(Command const& command)
 {
 	std::vector<char>	data = command.encode();
 
+	if (m_write_buffer.empty())
+		Server::getInstance().hasPendingSend(m_fd);
 	std::ostream &os = Log::Info << "sending command : ";
 	ITERATE_CONST(std::vector<char>, data, itr)
 		os << *itr;
 	os.flush();
-	// TODO unblocked send
-	send(m_fd, data.data(), data.size(), 0);
+	m_write_buffer.insert(m_write_buffer.end(), data.begin(), data.end());
+}
+
+void	Client::sendPendingCommand()
+{
+	while (!m_write_buffer.empty())
+	{
+		ssize_t ret = send(m_fd, m_write_buffer.data(), m_write_buffer.size(), 0);
+		if (ret == 0 || (ret <= 0 && errno == ECONNRESET))
+			throw ConnectionLostException();
+		else if (ret <= 0 && errno == EAGAIN)
+			break ;
+		else if (ret <= 0)
+			throw WriteErrorException(std::strerror(errno));
+		m_write_buffer.erase(m_write_buffer.begin(), m_write_buffer.begin() + ret);
+	}
+	if (m_write_buffer.empty())
+		Server::getInstance().noPendingSend(m_fd);
 }
 
 void	Client::execPendingCommands(void)
@@ -162,7 +180,7 @@ void	Client::execPendingCommands(void)
 	{
 		try
 		{
-			c = m_buffer.popFront();
+			c = m_read_buffer.popFront();
 			std::string	uc = c.getCommand();
 			std::transform(uc.begin(), uc.end(), uc.begin(), ::toupper);
 			Log::Debug << "Exec command :\"" << uc << "\" (" << ipv4FromSockaddr(m_addr) << ")" << std::endl;

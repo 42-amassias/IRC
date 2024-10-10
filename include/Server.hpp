@@ -6,7 +6,7 @@
 /*   By: ale-boud <ale-boud@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/28 01:58:52 by amassias          #+#    #+#             */
-/*   Updated: 2024/10/09 06:14:43 by ale-boud         ###   ########.fr       */
+/*   Updated: 2024/10/10 14:00:49 by ale-boud         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -48,6 +48,9 @@ class Server
 
 		static ClientManager	&getClientManager();
 		static ChannelManager	&getChannelManager();
+
+		void	hasPendingSend(int fd);
+		void	noPendingSend(int fd);
 
 	private:
 		Server(void);

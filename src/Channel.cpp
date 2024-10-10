@@ -158,7 +158,7 @@ void	Channel::changeMode(std::string const& mode, std::vector<std::string> const
 			}
 			if (set && args_itr == sended_args.end())
 				break ;
-			m_flag_k = (*args_itr);
+			m_flag_k = *(args_itr++);
 			// *(args_itr++) = "[hidden password]"; IRSSI is piece of shit
 			break ;
 		case 'l':
