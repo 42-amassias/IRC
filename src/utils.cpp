@@ -18,7 +18,7 @@ std::string	ipv4FromSockaddr(struct sockaddr_in const &addr)
 
 }
 
-bool	usernickValidator(std::string const& str)
+bool	nickValidator(std::string const& str)
 {
 	if (str.length() == 0)
 		return (false);

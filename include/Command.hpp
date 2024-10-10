@@ -6,7 +6,7 @@
 /*   By: ale-boud <ale-boud@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/06 15:11:01 by ale-boud          #+#    #+#             */
-/*   Updated: 2024/10/10 06:09:19 by ale-boud         ###   ########.fr       */
+/*   Updated: 2024/10/10 06:16:20 by ale-boud         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -76,6 +76,7 @@
 # define CREATE_ERR_BADCHANMASK(client, chan_name) (CREATE_ERR(client, ERR_BADCHANMASK, (chan_name), "Is not a valid channel name"))
 # define CREATE_ERR_BADCHANNELKEY(client, chan_name) (CREATE_ERR(client, ERR_BADCHANNELKEY, (chan_name), "Cannot join channel (+k)"))
 # define CREATE_ERR_USERONCHANNEL(client, nick, chan_name) (CREATE_ERR(client, ERR_USERONCHANNEL, (nick), (chan_name), "is already on channel"))
+# define CREATE_ERR_NONICKNAMEGIVEN(client) (CREATE_ERR(client, ERR_NONICKNAMEGIVEN, "No nickname given"))
 
 # define CREATE_RPL_WELCOME(client) (CREATE_COMMAND("", RPL_WELCOME, (client).getNickname(), WELCOME_MESSAGE))
 # define CREATE_RPL_YOUREOPER(client) (CREATE_COMMAND("", RPL_YOUREOPER, (client).getNickname(), "You are now an IRC operator"))
@@ -91,7 +92,6 @@ enum	irc_errcode {
 	ERR_ALREADYREGISTERED=462,
 	ERR_PASSWDMISMATCH=464,
 	ERR_UNKNOWNCOMMAND=421,
-	ERR_NONICKNAMEGIVEN=431,
 	ERR_ERRONEUSNICKNAME=432,
 	ERR_NOTREGISTERED=451,
 	ERR_NICKNAMEINUSE=433,
@@ -110,6 +110,7 @@ enum	irc_errcode {
 	ERR_UNKNOWNMODE=472,
 	ERR_UMODEUNKNOWNFLAG=501,
 	ERR_BADCHANNELKEY=475,
+	ERR_NONICKNAMEGIVEN=431,
 	ERR_USERONCHANNEL=443
 };
 

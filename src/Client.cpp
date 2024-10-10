@@ -6,7 +6,7 @@
 /*   By: ale-boud <ale-boud@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/06 14:16:08 by ale-boud          #+#    #+#             */
-/*   Updated: 2024/10/10 06:07:47 by ale-boud         ###   ########.fr       */
+/*   Updated: 2024/10/10 06:27:25 by ale-boud         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -206,7 +206,7 @@ void	Client::welcome()
 		m_state = RETRY;
 		return ;
 	}
-	if (!usernickValidator(m_nickname))
+	if (!nickValidator(m_nickname))
 	{
 		sendCommand(CREATE_ERR_ERRONEUSNICKNAME(*this, m_nickname));
 		m_state = RETRY;
@@ -215,6 +215,29 @@ void	Client::welcome()
 	Server::getClientManager().addClient(this);
 	sendCommand(CREATE_RPL_WELCOME(*this));
 	m_state = REGISTERED;
+}
+
+void	Client::execNICK(Command const& command)
+{
+	if (command.getParameters().size() < 1)
+		sendCommand(CREATE_ERR_NONICKNAMEGIVEN(*this));
+	else if (m_state == REGISTERED && !nickValidator(command.getParameters()[0]))
+		sendCommand(CREATE_ERR_ERRONEUSNICKNAME(*this, command.getParameters()[0]));
+	else if (m_state == REGISTERED && Server::getClientManager().inUse(command.getParameters()[0]))
+		sendCommand(CREATE_ERR_NICKNAMEINUSE(*this, command.getParameters()[0]));
+	else if (m_state != REGISTERED)
+	{
+		m_nickname = command.getParameters()[0];
+		if (m_state == RETRY)
+			welcome();
+	}
+	else
+	{
+		Command	c(CREATE_COMMAND(getPrefix(), "NICK", command.getParameters()[0]));
+		sendCommand(c);
+		Server::getChannelManager().sendToAll(c, this);
+		m_nickname = command.getParameters()[0];
+	}
 }
 
 void	Client::execPRIVMSG(Command const& command)
@@ -285,22 +308,6 @@ void	Client::execPASS(Command const& command)
 		sendCommand(CREATE_ERR_NEEDMOREPARAMS(*this, command.getCommand()));
 	else
 		m_userpwd = command.getParameters()[0];
-}
-
-void	Client::execNICK(Command const& command)
-{
-	if (command.getParameters().size() < 1)
-		sendCommand(CREATE_ERR_NEEDMOREPARAMS(*this, command.getCommand()));
-	else if (m_state == REGISTERED && !usernickValidator(command.getParameters()[0]))
-		sendCommand(CREATE_ERR_ERRONEUSNICKNAME(*this, command.getParameters()[0]));
-	else if (m_state == REGISTERED && Server::getClientManager().inUse(command.getParameters()[0]))
-		sendCommand(CREATE_ERR_NICKNAMEINUSE(*this, command.getParameters()[0]));
-	else
-	{
-		m_nickname = command.getParameters()[0];
-		if (m_state == RETRY)
-			welcome();
-	}
 }
 
 void	Client::execUSER(Command const& command)

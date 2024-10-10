@@ -17,7 +17,7 @@ Channel::Channel(std::string const& name, Client *owner) :
 	m_invited(),
 	m_clients()
 {
-	if (!name.empty() && !usernickValidator(name))
+	if (!name.empty() && !nickValidator(name))
 		throw InvalidChannelNameException();
 	Log::Debug << "Channel #" << name << " created by " << owner->getNickname() << std::endl;
 	m_flag_o.insert(owner);
