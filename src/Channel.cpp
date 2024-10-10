@@ -1,6 +1,7 @@
+#include <climits>
+#include <cstdlib>
 
 #include "Log.hpp"
-
 #include "Channel.hpp"
 
 Channel::Channel(std::string const& name, Client *owner) :
@@ -91,7 +92,7 @@ void	Channel::changeMode(std::string const& mode, std::string const& arg, Client
 	// We can parse
 	if (!m_flag_o.count(client))
 		throw RequireOperException();
-	else if ((mode == "+k" && arg.empty()) || (mode[1] == 'o' && arg.empty()))
+	else if (arg.empty() && (mode == "+k" || mode[1] == 'o' || mode == "+l"))
 		throw NeedMoreParamsException();
 	else if (mode == "+k")
 		m_flag_k = arg;
@@ -106,39 +107,57 @@ void	Channel::changeMode(std::string const& mode, std::string const& arg, Client
 		m_flag_i = true;
 	else if (mode == "+o")
 	{
-		ITERATE(std::set<Client *>, m_clients, itr)
+		std::set<Client *>::iterator	itr(m_clients.begin());
+		while (itr != m_clients.end())
+		{
 			if ((*itr)->getNickname() == arg)
 			{
 				if (!m_flag_o.count((*itr))) // Not already op ?
-				{
 					m_flag_o.insert((*itr));
-					sendToAll(CREATE_COMMAND(client->getPrefix(), "MODE", "#" + m_chan_name, "+o", arg));
-				}
-				return ;
+				break ;
 			}
-		throw NotInChannelException();
+			++itr;
+		}
+		if (itr == m_clients.end())
+			throw NotInChannelException();
 	}
 	else if (mode == "-o")
 	{
-		ITERATE(std::set<Client *>, m_clients, itr)
+		std::set<Client *>::iterator	itr(m_clients.begin());
+		while (itr != m_clients.end())
+		{
 			if ((*itr)->getNickname() == arg)
 			{
 				if (m_flag_o.count((*itr))) // Already op ?
-				{
 					m_flag_o.erase((*itr));
-					sendToAll(CREATE_COMMAND(client->getPrefix(), "MODE", "#" + m_chan_name, "-o", arg));
-				}
-				return ;
+				break ;
 			}
-		throw NotInChannelException();
+			++itr;
+		}
+		if (itr == m_clients.end())
+			throw NotInChannelException();
 	}
 	else if (mode == "+t")
 		m_flag_t = true;
 	else if (mode == "-t")
 		m_flag_t = false;
+	else if (mode == "-l")
+		m_flag_l = 0;
+	else if (mode == "+l")
+	{
+		char	*end;
+		std::size_t	tmp = std::strtoul(arg.c_str(), &end, 10);
+		if (tmp == ULONG_MAX || tmp == 0)
+			throw InvalidModeFlagException();
+		m_flag_l = tmp;
+	}
 	else
 		throw UnknownModeException(mode.c_str() + 1);
-
+	// Everything ok
+	if (arg.empty())
+		sendToAll(CREATE_COMMAND(client->getPrefix(), "MODE", "#" + m_chan_name, mode));
+	else
+		sendToAll(CREATE_COMMAND(client->getPrefix(), "MODE", "#" + m_chan_name, mode, arg));
 }
 
 void	Channel::join(Client *client)
@@ -163,10 +182,12 @@ std::string	const&	Channel::getTopic() const
 
 void	Channel::setTopic(std::string const& topic, Client *sender)
 {
-	if (!m_flag_o.count(sender))
+	if (m_flag_t && !m_flag_o.count(sender))
 		throw RequireOperException();
 	m_topic_nick = sender->getNickname();
 	m_topic_setat = std::time(NULL);
+	ITERATE(std::set<Client *>, m_clients, itr)
+		sendTopic((*itr));
 	setTopic(topic);
 }
 
