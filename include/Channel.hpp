@@ -26,9 +26,12 @@ class Channel
 
 		void	changeMode(std::string const& mode, std::vector<std::string> const& args, Client *client);
 
+		Command				getModeCommand() const;
 		std::string	const&	getTopic() const;
 		void				sendTopic(Client *client) const;
 		void				setTopic(std::string const& topic, Client *sender);
+		bool				isInvited(Client *client) const;
+		void				invite(Client *client, Client *to_invite);
 
 	private:
 		Channel();
@@ -55,6 +58,7 @@ class Channel
 		CREATE_EXCEPTION(PasswordMismatch, "The given password isn't valid");
 		CREATE_EXCEPTION(NotInvited, "Not on the invite list");
 		CREATE_EXCEPTION(ChannelFull, "The channel is full");
+		CREATE_EXCEPTION(AlreadyInChannel, "The client to invite is already in the channel");
 		CREATE_EXCEPTION(NotRegistered, "Not in the current connected user channel");
 		CREATE_EXCEPTION(NeedMoreParams, "Need more params for the mode change");
 		CREATE_EXCEPTION(InvalidModeFlag, "The given mode is not valid");

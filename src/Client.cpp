@@ -6,7 +6,7 @@
 /*   By: ale-boud <ale-boud@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/06 14:16:08 by ale-boud          #+#    #+#             */
-/*   Updated: 2024/10/10 04:01:35 by ale-boud         ###   ########.fr       */
+/*   Updated: 2024/10/10 06:07:47 by ale-boud         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -43,6 +43,7 @@ Client::_logged_command_function_map[] = {
 	std::make_pair("QUIT", &Client::execQUIT),
 	std::make_pair("TOPIC", &Client::execTOPIC),
 	std::make_pair("MODE", &Client::execMODE),
+	std::make_pair("INVITE", &Client::execINVITE),
 };
 
 const std::map<std::string, void (Client::*)(Command const&)>
@@ -433,8 +434,27 @@ void	Client::execTOPIC(Command const& command)
 void	Client::execMODE(Command const& command)
 {
 	std::vector<std::string> const	&params = command.getParameters();
-	if (params.size() < 2 || params[0].empty()) // TODO : size < 1 (MODE get info)
+	if (params.size() < 1)
 		sendCommand(CREATE_ERR_NEEDMOREPARAMS(*this, command.getCommand()));
+	else if (params.size() < 2 || params[0].empty()) // TODO : size < 1 (MODE get info)
+	{
+		std::string	chan_name(params[0]);
+		if (chan_name[0] != '#')
+			return ;
+		chan_name.erase(chan_name.begin());try
+		{
+			Channel	&chan = Server::getChannelManager().getChannel(chan_name);
+			sendCommand(chan.getModeCommand());
+		}
+		catch (ChannelManager::DoesNotExistException const& e)
+		{
+			sendCommand(CREATE_ERR_NOSUCHCHANNEL(*this, "#" + chan_name));
+		}
+		catch (Channel::NotRegisteredException const& e)
+		{
+			sendCommand(CREATE_ERR_NOTONCHANNEL(*this, "#" + chan_name));
+		}
+	}
 	else
 	{
 		std::string	chan_name(params[0]);
@@ -475,3 +495,59 @@ void	Client::execMODE(Command const& command)
 		}
 	}
 }
+
+void	Client::execINVITE(Command const& command)
+{
+	std::vector<std::string> const	&params = command.getParameters();
+	if (params.size() < 2)
+	{
+		sendCommand(CREATE_ERR_NEEDMOREPARAMS(*this, command.getCommand()));
+		return ;
+	}
+	std::string	chan_name(params[1]);
+	if (chan_name.empty() || chan_name[0] != '#')
+	{
+		sendCommand(CREATE_ERR_BADCHANMASK(*this, chan_name));
+		return ;
+	}
+	chan_name.erase(chan_name.begin());
+	Client	*to_invite = Server::getClientManager().getClient(params[0]);
+	if (to_invite == NULL)
+	{
+		sendCommand(CREATE_ERR_NOSUCHNICK(*this, params[0]));
+		return ;
+	}
+	try
+	{
+		Server::getChannelManager().getChannel(chan_name).invite(this, to_invite);
+	}
+	catch (ChannelManager::DoesNotExistException const& e)
+	{
+		sendCommand(CREATE_ERR_NOSUCHCHANNEL(*this, "#" + chan_name));
+	}
+	catch (Channel::NotRegisteredException const& e)
+	{
+		sendCommand(CREATE_ERR_NOTONCHANNEL(*this, "#" + chan_name));
+	}
+	catch (Channel::RequireOperException const& e)
+	{
+		sendCommand(CREATE_ERR_CHANOPRIVSNEEDED(*this, "#" + chan_name));
+	}
+	catch (Channel::AlreadyInChannelException const& e)
+	{
+		sendCommand(CREATE_ERR_USERONCHANNEL(*this, params[0], "#" + chan_name));
+	}
+}
+
+// void	Client::execINVITE(Command const& command)
+// {
+// 	std::vector<std::string>	&params = command.getParameters();
+// 	if (params.size() < 2)
+// 	{
+// 		sendCommand(CREATE_ERR_NEEDMOREPARAMS(*this, command.getCommand()));
+// 	}
+// 	else
+// 	{
+		
+// 	}
+// }

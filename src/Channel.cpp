@@ -39,7 +39,7 @@ void	Channel::join(std::string const& chan_key, Client *client)
 		throw ChannelFullException();
 	if (m_flag_i && !m_invited.count(client))
 		throw NotInvitedException();
-	else
+	else if (m_flag_i)
 		m_invited.erase(client);
 	join(client);
 }
@@ -55,6 +55,20 @@ void	Channel::removeClient(Client *client)
 	m_clients.erase(client);
 	m_invited.erase(client);
 	m_flag_o.erase(client);
+}
+
+void	Channel::invite(Client *client, Client *to_invite)
+{
+	if (!m_clients.count(client))
+		throw NotRegisteredException();
+	if (!m_flag_o.count(client))
+		throw RequireOperException();
+	if (m_clients.count(to_invite))
+		throw AlreadyInChannelException();
+	if (m_flag_i)
+		m_invited.insert(to_invite);
+	client->sendCommand(CREATE_RPL_INVITING(*client, to_invite->getNickname(), "#" + m_chan_name));
+	to_invite->sendCommand(CREATE_COMMAND(client->getPrefix(), "INVITE", to_invite->getNickname(), "#" + m_chan_name));
 }
 
 bool	Channel::empty() const
@@ -117,15 +131,21 @@ void	Channel::changeMode(std::string const& mode, std::vector<std::string> const
 			break ;
 		case 'k':
 			if (!set)
+			{
 				m_flag_k.clear();
+				break ;
+			}
 			if (set && args_itr == sended_args.end())
 				break ;
 			m_flag_k = (*args_itr);
-			*(args_itr++) = "[hidden password]";
+			// *(args_itr++) = "[hidden password]"; IRSSI is piece of shit
 			break ;
 		case 'l':
 			if (!set)
+			{
 				m_flag_l = 0;
+				break ;
+			}
 			if (set && args_itr == sended_args.end())
 				break ;
 			tmp = std::strtoul((*args_itr).c_str(), &end, 10);
@@ -179,6 +199,50 @@ void	Channel::join(Client *client)
 		client->sendCommand(CREATE_COMMAND("", RPL_NAMREPLY, client->getNickname(), "=", real_chan_name, s));
 	}
 	client->sendCommand(CREATE_RPL_ENDOFNAMES(*client, real_chan_name));
+}
+
+Command	Channel::getModeCommand() const
+{
+	Command	c("", "MODE", (const std::string[]){"#" + m_chan_name});
+	std::string	mode("+");
+	std::vector<std::string>	args;
+	if (m_flag_i)
+		mode.push_back('i');
+	if (!m_flag_k.empty())
+	{
+		mode.push_back('k');
+		args.push_back(m_flag_k);
+	}
+	if (m_flag_t)
+		mode.push_back('t');
+	if (m_flag_l != 0)
+	{
+		mode.push_back('l');
+		args.push_back(SSTR(m_flag_l));
+	}
+	if (mode == "+")
+		mode = "-";
+	else
+		mode.push_back('-');
+	if (!m_flag_i)
+		mode.push_back('i');
+	if (m_flag_k.empty())
+		mode.push_back('k');
+	if (!m_flag_t)
+		mode.push_back('t');
+	if (m_flag_l == 0)
+		mode.push_back('l');
+	if (*(mode.end()-1) == '-') // mode.size > 1
+		mode.erase(mode.end()-1);
+	c.addParameter(mode);
+	ITERATE(std::vector<std::string>, args, itr)
+		c.addParameter(*itr);
+	return (c);
+}
+
+bool	Channel::isInvited(Client *client) const
+{
+	return (m_invited.count(client) || !m_flag_i);
 }
 
 std::string	const&	Channel::getTopic() const

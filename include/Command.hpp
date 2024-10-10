@@ -6,7 +6,7 @@
 /*   By: ale-boud <ale-boud@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/06 15:11:01 by ale-boud          #+#    #+#             */
-/*   Updated: 2024/10/10 04:01:16 by ale-boud         ###   ########.fr       */
+/*   Updated: 2024/10/10 06:09:19 by ale-boud         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -75,6 +75,7 @@
 # define CREATE_ERR_USERNOTINCHANNEL(client, nick, chan_name) (CREATE_ERR(client, ERR_USERNOTINCHANNEL, (nick), (chan_name), "Is not in channel"))
 # define CREATE_ERR_BADCHANMASK(client, chan_name) (CREATE_ERR(client, ERR_BADCHANMASK, (chan_name), "Is not a valid channel name"))
 # define CREATE_ERR_BADCHANNELKEY(client, chan_name) (CREATE_ERR(client, ERR_BADCHANNELKEY, (chan_name), "Cannot join channel (+k)"))
+# define CREATE_ERR_USERONCHANNEL(client, nick, chan_name) (CREATE_ERR(client, ERR_USERONCHANNEL, (nick), (chan_name), "is already on channel"))
 
 # define CREATE_RPL_WELCOME(client) (CREATE_COMMAND("", RPL_WELCOME, (client).getNickname(), WELCOME_MESSAGE))
 # define CREATE_RPL_YOUREOPER(client) (CREATE_COMMAND("", RPL_YOUREOPER, (client).getNickname(), "You are now an IRC operator"))
@@ -82,7 +83,8 @@
 # define CREATE_RPL_ENDOFNAMES(client, chan_name) (CREATE_COMMAND("", RPL_ENDOFNAMES, (client).getNickname(), (chan_name), "End of NAMES list"))
 # define CREATE_RPL_NOTOPIC(client, chan_name) (CREATE_COMMAND("", RPL_NOTOPIC, (client).getNickname(), (chan_name), "No topic is set"))
 # define CREATE_RPL_TOPICWHOTIME(client, chan_name, nick, setat) (CREATE_COMMAND("", RPL_TOPICWHOTIME, (client).getNickname(), (chan_name), (nick), (setat)))
-# define CREATE_RPL_CHANNELMODEIS(client, chan_name, ...) (CREATE_COMMAND("", RPL_TOPICWHOTIME, (client).getNickname(), (chan_name), (nick), (setat)))
+# define CREATE_RPL_CHANNELMODEIS(client, chan_name) (CREATE_COMMAND("", RPL_TOPICWHOTIME, (client).getNickname(), (chan_name), (nick), (setat)))
+# define CREATE_RPL_INVITING(client, nick, channel) (CREATE_COMMAND("", RPL_INVITING, (client).getNickname(), (nick), (channel)))
 
 enum	irc_errcode {
 	ERR_NEEDMOREPARAMS=461,
@@ -108,6 +110,7 @@ enum	irc_errcode {
 	ERR_UNKNOWNMODE=472,
 	ERR_UMODEUNKNOWNFLAG=501,
 	ERR_BADCHANNELKEY=475,
+	ERR_USERONCHANNEL=443
 };
 
 enum	irc_rplcode {
@@ -119,6 +122,7 @@ enum	irc_rplcode {
 	RPL_NAMREPLY=353,
 	RPL_ENDOFNAMES=366,
 	RPL_CHANNELMODEIS=324,
+	RPL_INVITING=341,
 };
 
 class Command
