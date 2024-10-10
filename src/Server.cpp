@@ -6,7 +6,7 @@
 /*   By: ale-boud <ale-boud@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/28 01:58:44 by amassias          #+#    #+#             */
-/*   Updated: 2024/10/10 14:39:04 by ale-boud         ###   ########.fr       */
+/*   Updated: 2024/10/10 19:14:40 by ale-boud         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -65,6 +65,7 @@ Server::Server(void) :
 	m_channel_manager(),
 	m_running(false)
 {
+	setupSignals();
 }
 
 Server::~Server(void)
@@ -176,7 +177,6 @@ void	Server::init(void)
 		this->createSocket();
 		this->bindSocket();
 		this->listenSocket();
-		this->setupSignals();
 	}
 	catch(const std::exception& e)
 	{

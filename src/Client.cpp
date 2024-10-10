@@ -6,7 +6,7 @@
 /*   By: ale-boud <ale-boud@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/06 14:16:08 by ale-boud          #+#    #+#             */
-/*   Updated: 2024/10/10 14:43:22 by ale-boud         ###   ########.fr       */
+/*   Updated: 2024/10/10 19:21:03 by ale-boud         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,8 +19,8 @@
 #include "Client.hpp"
 #include "Server.hpp"
 
-const std::string	Client::oper_username("john");
-const std::string	Client::oper_password("cena") ;
+// const std::string	Client::oper_username("john");
+// const std::string	Client::oper_password("cena") ;
 
 const std::pair<std::string, void (Client::*)(Command const&)>
 Client::_command_function_map[] = {
@@ -38,7 +38,6 @@ const std::pair<std::string, void (Client::*)(Command const&)>
 Client::_logged_command_function_map[] = {
 	std::make_pair("PRIVMSG", &Client::execPRIVMSG),
 	std::make_pair("NOTICE", &Client::execNOTICE),
-	std::make_pair("OPER", &Client::execOPER),
 	std::make_pair("JOIN", &Client::execJOIN),
 	std::make_pair("QUIT", &Client::execQUIT),
 	std::make_pair("TOPIC", &Client::execTOPIC),
@@ -46,6 +45,7 @@ Client::_logged_command_function_map[] = {
 	std::make_pair("INVITE", &Client::execINVITE),
 	std::make_pair("PART", &Client::execPART),
 	std::make_pair("KICK", &Client::execKICK),
+	// std::make_pair("OPER", &Client::execOPER),
 };
 
 const std::map<std::string, void (Client::*)(Command const&)>
@@ -352,20 +352,20 @@ void	Client::execPING(Command const& command)
 		sendCommand(CREATE_COMMAND("", "PONG", "localhost", command.getParameters()[0]));
 }
 
-void	Client::execOPER(Command const& command)
-{
-	if (command.getParameters().size() < 2)
-		sendCommand(CREATE_ERR_NEEDMOREPARAMS(*this, command.getCommand()));
-	else if (command.getParameters()[0] != oper_username || command.getParameters()[1] != oper_password)
-		sendCommand(CREATE_ERR_PASSWDMISMATCH(*this));
-	else
-	{
-		sendCommand(CREATE_RPL_YOUREOPER(*this));
-		if (!m_isoperator)
-			Server::getClientManager().sendAll(CREATE_COMMAND(getPrefix(), "MODE", "+o", m_nickname));
-		m_isoperator = true;
-	}
-}
+// void	Client::execOPER(Command const& command)
+// {
+// 	if (command.getParameters().size() < 2)
+// 		sendCommand(CREATE_ERR_NEEDMOREPARAMS(*this, command.getCommand()));
+// 	else if (command.getParameters()[0] != oper_username || command.getParameters()[1] != oper_password)
+// 		sendCommand(CREATE_ERR_PASSWDMISMATCH(*this));
+// 	else
+// 	{
+// 		sendCommand(CREATE_RPL_YOUREOPER(*this));
+// 		if (!m_isoperator)
+// 			Server::getClientManager().sendAll(CREATE_COMMAND(getPrefix(), "MODE", "+o", m_nickname));
+// 		m_isoperator = true;
+// 	}
+// }
 
 void	Client::execPART(Command const& command)
 {

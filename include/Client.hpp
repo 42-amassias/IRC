@@ -6,7 +6,7 @@
 /*   By: ale-boud <ale-boud@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/28 01:58:54 by amassias          #+#    #+#             */
-/*   Updated: 2024/10/10 13:46:18 by ale-boud         ###   ########.fr       */
+/*   Updated: 2024/10/10 19:20:44 by ale-boud         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -64,7 +64,7 @@ class Client
 
 		void		execPRIVMSG(Command const& command);
 		void		execNOTICE(Command const& command);
-		void		execOPER(Command const& command);
+		// void		execOPER(Command const& command);
 		void		execJOIN(Command const& command);
 		void		execQUIT(Command const& command);
 		void		execTOPIC(Command const& command);
@@ -93,8 +93,8 @@ class Client
 		static const std::pair<std::string, void (Client::*)(Command const&)>
 			_logged_command_function_map[];
 
-		static const std::string	oper_username;
-		static const std::string	oper_password;
+		// static const std::string	oper_username;
+		// static const std::string	oper_password;
 
 	public:
 		
