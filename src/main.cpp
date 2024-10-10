@@ -6,7 +6,7 @@
 /*   By: ale-boud <ale-boud@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/28 01:58:48 by amassias          #+#    #+#             */
-/*   Updated: 2024/10/10 04:02:18 by ale-boud         ###   ########.fr       */
+/*   Updated: 2024/10/10 16:58:30 by ale-boud         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -82,6 +82,11 @@ static bool	check_arg_count(int argc, const char **argv)
 static bool	parse_port(const char* str_port, int& port)
 {
 	port = 0;
+	if (*str_port == '\0')
+	{
+		std::cerr << pn << ": Invalid port number." << std::endl;
+		return (true);
+	}
 	for (const char *str = str_port; *str != '\0'; ++str)
 	{
 		port = 10 * port + *str - '0';
@@ -96,6 +101,11 @@ static bool	parse_port(const char* str_port, int& port)
 
 static bool	check_password(const char* str_password)
 {
+	if (*str_password == '\0')
+	{
+		std::cerr << pn << ": Invalid password." << std::endl;
+		return (true);
+	}
 	for (const char* itr = str_password; *itr; ++itr)
 		if (*itr == '\0' || *itr == '\n' || *itr == '\r' || *itr == ':')
 		{
