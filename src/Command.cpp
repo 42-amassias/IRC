@@ -6,7 +6,7 @@
 /*   By: ale-boud <ale-boud@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/06 15:10:43 by ale-boud          #+#    #+#             */
-/*   Updated: 2024/10/09 20:21:16 by ale-boud         ###   ########.fr       */
+/*   Updated: 2024/10/10 03:34:07 by ale-boud         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -276,6 +276,11 @@ std::string const&				Command::getCommand() const
 std::vector<std::string> const&	Command::getParameters() const
 {
 	return m_parameters;
+}
+
+void	Command::addParameter(std::string const& str)
+{
+	m_parameters.push_back(str);
 }
 
 void	Command::setPrefix(std::string const& _prefix)

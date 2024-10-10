@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   main.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: Antoine Massias <massias.antoine.pro@gm    +#+  +:+       +#+        */
+/*   By: ale-boud <ale-boud@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/28 01:58:48 by amassias          #+#    #+#             */
-/*   Updated: 2024/10/09 22:41:52 by Antoine Mas      ###   ########.fr       */
+/*   Updated: 2024/10/10 04:02:18 by ale-boud         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -58,11 +58,11 @@ int	main(int argc, char **argv)
 		Server::getInstance().setPort(port);
 		Server::getInstance().init();
 		Server::getInstance().loop();
-		Server::destroyInstance();
 	} catch (const std::exception &e)
 	{
 		Log::Error << "Server encountered a fatal error : " << e.what() << std::endl;
 	}
+	Server::destroyInstance();
 	return (0);
 }
 

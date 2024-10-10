@@ -6,7 +6,7 @@
 /*   By: ale-boud <ale-boud@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/06 14:16:08 by ale-boud          #+#    #+#             */
-/*   Updated: 2024/10/09 22:48:01 by ale-boud         ###   ########.fr       */
+/*   Updated: 2024/10/10 04:01:35 by ale-boud         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -378,6 +378,10 @@ void	Client::execJOIN(Command const& command)
 			{
 				sendCommand(CREATE_ERR_CHANNELISFULL(*this, "#" + chan_name));
 			}
+			catch (Channel::PasswordMismatchException const& e)
+			{
+				sendCommand(CREATE_ERR_BADCHANNELKEY(*this, "#" + chan_name));
+			}
 		}
 	}
 }
@@ -429,7 +433,7 @@ void	Client::execTOPIC(Command const& command)
 void	Client::execMODE(Command const& command)
 {
 	std::vector<std::string> const	&params = command.getParameters();
-	if (params.size() < 2 || params[0].empty()) // TODO : size == 1 (MODE get info)
+	if (params.size() < 2 || params[0].empty()) // TODO : size < 1 (MODE get info)
 		sendCommand(CREATE_ERR_NEEDMOREPARAMS(*this, command.getCommand()));
 	else
 	{
@@ -439,7 +443,7 @@ void	Client::execMODE(Command const& command)
 		chan_name.erase(chan_name.begin());
 		try
 		{
-			Server::getChannelManager().getChannel(chan_name).changeMode(params[1], params.size() >= 3 ? params[2] : "", this);
+			Server::getChannelManager().getChannel(chan_name).changeMode(params[1], std::vector<std::string>(params.begin() + 2, params.end()), this);
 		}
 		catch (ChannelManager::DoesNotExistException const& e)
 		{

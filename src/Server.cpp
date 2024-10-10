@@ -6,7 +6,7 @@
 /*   By: ale-boud <ale-boud@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/28 01:58:44 by amassias          #+#    #+#             */
-/*   Updated: 2024/10/09 08:29:42 by ale-boud         ###   ########.fr       */
+/*   Updated: 2024/10/10 04:36:41 by ale-boud         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -221,20 +221,23 @@ void	Server::loop(void)
 				Client	*c = m_clients.at(it->fd);
 				try
 				{
-					c->receive(it->fd);
-					c->execPendingCommands();
-				}
-				catch (Client::ConnectionLostException const& e)
-				{
-					c->execPendingCommands();
-					Log::Info << ipv4FromSockaddr(c->getSockaddr()) << " disconnected" << std::endl;
-					removeConnection(it->fd);
-				}
-				catch (Client::ReadErrorException const& e)
-				{
-					Log::Warn << "Connection lost due to error with "
-						<< ipv4FromSockaddr(c->getSockaddr()) << ": " << e.what() << std::endl;
-					removeConnection(it->fd);
+					try
+					{
+						c->receive(it->fd);
+						c->execPendingCommands();
+					}
+					catch (Client::ConnectionLostException const& e)
+					{
+						c->execPendingCommands();
+						Log::Info << ipv4FromSockaddr(c->getSockaddr()) << " disconnected" << std::endl;
+						removeConnection(it->fd);
+					}
+					catch (Client::ReadErrorException const& e)
+					{
+						Log::Warn << "Connection lost due to error with "
+							<< ipv4FromSockaddr(c->getSockaddr()) << ": " << e.what() << std::endl;
+						removeConnection(it->fd);
+					}
 				}
 				catch (Client::BadPasswordException const& e)
 				{

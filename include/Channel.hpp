@@ -24,7 +24,7 @@ class Channel
 		void	removeClient(Client *client); // Dont track freed data
 		bool	empty() const;
 
-		void	changeMode(std::string const& mode, std::string const& arg, Client *client);
+		void	changeMode(std::string const& mode, std::vector<std::string> const& args, Client *client);
 
 		std::string	const&	getTopic() const;
 		void				sendTopic(Client *client) const;

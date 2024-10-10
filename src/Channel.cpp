@@ -83,81 +83,87 @@ void	Channel::sendToAll(Command const& command, Client *sender, std::set<Client 
 		}
 }
 
-void	Channel::changeMode(std::string const& mode, std::string const& arg, Client *client)
+void	Channel::changeMode(std::string const& mode, std::vector<std::string> const& args, Client *client)
 {
 	if (!m_clients.count(client))
 		throw NotRegisteredException();
-	if (mode.size() != 2 || (mode[0] != '-' && mode[0] != '+'))
+	if (mode.size() < 2 || (mode[0] != '-' && mode[0] != '+'))
 		throw InvalidModeFlagException();
-	// We can parse
 	if (!m_flag_o.count(client))
 		throw RequireOperException();
-	else if (arg.empty() && (mode == "+k" || mode[1] == 'o' || mode == "+l"))
-		throw NeedMoreParamsException();
-	else if (mode == "+k")
-		m_flag_k = arg;
-	else if (mode == "-k")
-		m_flag_k.clear();
-	else if (mode == "-i")
+	bool	set = mode[0] == '+';
+	std::string	sended_mode(mode);
+	std::string::iterator	itr = sended_mode.begin()+1;
+	std::vector<std::string>	sended_args(args);
+	std::vector<std::string>::iterator	args_itr = sended_args.begin();
+	while (itr != sended_mode.end())
 	{
-		m_flag_i = false;
-		m_invited.clear();
-	}
-	else if (mode == "+i")
-		m_flag_i = true;
-	else if (mode == "+o")
-	{
-		std::set<Client *>::iterator	itr(m_clients.begin());
-		while (itr != m_clients.end())
-		{
-			if ((*itr)->getNickname() == arg)
-			{
-				if (!m_flag_o.count((*itr))) // Not already op ?
-					m_flag_o.insert((*itr));
-				break ;
-			}
-			++itr;
-		}
-		if (itr == m_clients.end())
-			throw NotInChannelException();
-	}
-	else if (mode == "-o")
-	{
-		std::set<Client *>::iterator	itr(m_clients.begin());
-		while (itr != m_clients.end())
-		{
-			if ((*itr)->getNickname() == arg)
-			{
-				if (m_flag_o.count((*itr))) // Already op ?
-					m_flag_o.erase((*itr));
-				break ;
-			}
-			++itr;
-		}
-		if (itr == m_clients.end())
-			throw NotInChannelException();
-	}
-	else if (mode == "+t")
-		m_flag_t = true;
-	else if (mode == "-t")
-		m_flag_t = false;
-	else if (mode == "-l")
-		m_flag_l = 0;
-	else if (mode == "+l")
-	{
+		std::set<Client *>::iterator	clients_itr;
 		char	*end;
-		std::size_t	tmp = std::strtoul(arg.c_str(), &end, 10);
-		if (tmp == ULONG_MAX || tmp == 0)
-			throw InvalidModeFlagException();
-		m_flag_l = tmp;
+		std::size_t	tmp;
+		switch (*itr)
+		{
+		case '+':
+		case '-':
+			set = *itr == '+';
+			break ;
+		case 't':
+			m_flag_t = set;
+			break ;
+		case 'i':
+			if (!set)
+				m_invited.clear();
+			m_flag_i = set;
+			break ;
+		case 'k':
+			if (!set)
+				m_flag_k.clear();
+			if (set && args_itr == sended_args.end())
+				break ;
+			m_flag_k = (*args_itr);
+			*(args_itr++) = "[hidden password]";
+			break ;
+		case 'l':
+			if (!set)
+				m_flag_l = 0;
+			if (set && args_itr == sended_args.end())
+				break ;
+			tmp = std::strtoul((*args_itr).c_str(), &end, 10);
+			if (tmp == ULONG_MAX || tmp == 0)
+				throw InvalidModeFlagException();
+			m_flag_l = tmp;
+			++args_itr;
+			break ;
+		case 'o':
+			clients_itr = m_clients.begin();
+			while (clients_itr != m_clients.end())
+			{
+				if ((*clients_itr)->getNickname() == (*args_itr))
+				{
+					if (!m_flag_o.count((*clients_itr)) && set) // Not already op and set ?
+						m_flag_o.insert((*clients_itr));
+					if (m_flag_o.count((*clients_itr)) && !set) // Allready op and unset ?
+						m_flag_o.erase((*clients_itr));
+					break ;
+				}
+				++clients_itr;
+			}
+			if (clients_itr == m_clients.end())
+				throw NotInChannelException();
+			++args_itr;
+			break ;
+		default:
+			client->sendCommand(CREATE_ERR_UNKNOWNMODE(*client, std::string(1, *itr)));
+			itr = sended_mode.erase(itr);
+			continue ;
+		}
+		++itr;
 	}
-	else
-		throw UnknownModeException(mode.c_str() + 1);
-	// Everything ok
-	if (arg.empty())
-		sendToAll(CREATE_COMMAND(client->getPrefix(), "MODE", "#" + m_chan_name, mode));
-	else
-		sendToAll(CREATE_COMMAND(client->getPrefix(), "MODE", "#" + m_chan_name, mode, arg));
+	sended_args.erase(args_itr, sended_args.end());
+	Command	c(client->getPrefix(), "MODE", (const std::string[]){"#" + m_chan_name, sended_mode});
+	ITERATE(std::vector<std::string>, sended_args, _itr)
+		c.addParameter(*_itr);
+	sendToAll(c);
 }
 
 void	Channel::join(Client *client)
@@ -186,9 +192,9 @@ void	Channel::setTopic(std::string const& topic, Client *sender)
 		throw RequireOperException();
 	m_topic_nick = sender->getNickname();
 	m_topic_setat = std::time(NULL);
+	setTopic(topic);
 	ITERATE(std::set<Client *>, m_clients, itr)
 		sendTopic((*itr));
-	setTopic(topic);
 }
 
 void	Channel::sendTopic(Client *client) const
