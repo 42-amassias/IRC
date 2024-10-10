@@ -5,7 +5,7 @@
 #include "Channel.hpp"
 
 Channel::Channel(std::string const& name, Client *owner) :
-	m_flag_i(false),
+	m_flag_i(true),
 	m_flag_t(true),
 	m_flag_k(""),
 	m_flag_o(),
@@ -42,6 +42,27 @@ void	Channel::join(std::string const& chan_key, Client *client)
 	else if (m_flag_i)
 		m_invited.erase(client);
 	join(client);
+}
+
+void	Channel::part(Client *client, std::string const& reason)
+{
+	if (!m_clients.count(client))
+		throw NotRegisteredException();
+	if (reason.empty())
+		sendToAll(CREATE_COMMAND(client->getPrefix(), "PART", "#" + m_chan_name));
+	else
+		sendToAll(CREATE_COMMAND(client->getPrefix(), "PART", "#" + m_chan_name, reason));
+	m_clients.erase(client);
+}
+
+void	Channel::kick(Client *client, Client *to_kick, std::string const& comment)
+{
+	if (!m_clients.count(client))
+		throw NotRegisteredException();
+	if (!m_flag_o.count(client))
+		throw RequireOperException();
+	sendToAll(CREATE_COMMAND(client->getPrefix(), "KICK", "#" + m_chan_name, to_kick->getNickname(), comment));
+	m_clients.erase(to_kick);
 }
 
 void	Channel::sendToAll(Command const& command)

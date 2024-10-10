@@ -6,7 +6,7 @@
 /*   By: ale-boud <ale-boud@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/06 15:11:01 by ale-boud          #+#    #+#             */
-/*   Updated: 2024/10/10 06:16:20 by ale-boud         ###   ########.fr       */
+/*   Updated: 2024/10/10 06:45:05 by ale-boud         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -146,6 +146,8 @@ class Command
 		Command(std::string const& prefix,
 				std::string const& command,
 				std::vector<std::string> const& parameters);
+		Command(std::string const& prefix,
+				std::string const& command);
 		template<std::size_t N>
 		Command(std::string const& prefix,
 				std::string const& command,

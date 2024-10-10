@@ -18,6 +18,7 @@ class Channel
 		~Channel();
 
 		void	join(std::string const& chan_key, Client *client);
+		void	part(Client *client, std::string const& reason);
 		void	sendToAll(Command const& command, Client *sender);
 		void	sendToAll(Command const& command, Client *sender, std::set<Client *> &filter); // Update the filter to the sended clients
 
@@ -32,6 +33,7 @@ class Channel
 		void				setTopic(std::string const& topic, Client *sender);
 		bool				isInvited(Client *client) const;
 		void				invite(Client *client, Client *to_invite);
+		void				kick(Client *client, Client *to_kick, std::string const& comment);
 
 	private:
 		Channel();

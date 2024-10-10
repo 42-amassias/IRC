@@ -6,7 +6,7 @@
 /*   By: ale-boud <ale-boud@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/06 14:16:08 by ale-boud          #+#    #+#             */
-/*   Updated: 2024/10/10 06:27:25 by ale-boud         ###   ########.fr       */
+/*   Updated: 2024/10/10 07:37:10 by ale-boud         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -44,6 +44,8 @@ Client::_logged_command_function_map[] = {
 	std::make_pair("TOPIC", &Client::execTOPIC),
 	std::make_pair("MODE", &Client::execMODE),
 	std::make_pair("INVITE", &Client::execINVITE),
+	std::make_pair("PART", &Client::execPART),
+	std::make_pair("KICK", &Client::execKICK),
 };
 
 const std::map<std::string, void (Client::*)(Command const&)>
@@ -347,6 +349,44 @@ void	Client::execOPER(Command const& command)
 	}
 }
 
+void	Client::execPART(Command const& command)
+{
+	std::vector<std::string> const	&params = command.getParameters();
+	if (params.size() < 1)
+		sendCommand(CREATE_ERR_NEEDMOREPARAMS(*this, command.getCommand()));
+	else
+	{
+		std::string	reason;
+		if (params.size() >= 2)
+			reason = params[1];
+		std::stringstream	chan_name_ss(params[0]); // Not the 1939/45 thing
+		std::string			chan_name;
+		while (std::getline(chan_name_ss, chan_name, ','))
+		{
+			if (chan_name.empty())
+				continue ;
+			if (chan_name[0] != '#')
+			{
+				sendCommand(CREATE_ERR_BADCHANMASK(*this, chan_name));
+				continue ;
+			}
+			chan_name.erase(chan_name.begin());
+			try
+			{
+				Server::getChannelManager().getChannel(chan_name).part(this, reason);
+			}
+			catch(ChannelManager::DoesNotExistException const& e)
+			{
+				sendCommand(CREATE_ERR_NOSUCHCHANNEL(*this, "#" + chan_name));
+			}
+			catch(Channel::NotRegisteredException const& e)
+			{
+				sendCommand(CREATE_ERR_NOTONCHANNEL(*this, "#" + chan_name));
+			}
+		}
+	}
+}
+
 void	Client::execJOIN(Command const& command)
 {
 	std::vector<std::string> const	&params = command.getParameters();
@@ -402,6 +442,69 @@ void	Client::execQUIT(Command const& command)
 	Server::getChannelManager().sendToAll(c, this); // todo trim args
 	m_state = QUIT;
 	throw QuitMessageException();
+}
+
+void	Client::execKICK(Command const& command)
+{
+	std::vector<std::string> const	&params = command.getParameters();
+	if (params.size() < 2)
+	{
+		sendCommand(CREATE_ERR_NEEDMOREPARAMS(*this, command.getCommand()));
+		return ;
+	}
+	std::string	chan_name(params[0]);
+	if (chan_name.empty())
+		return ;
+	if (chan_name[0] != '#')
+	{
+		sendCommand(CREATE_ERR_NOSUCHCHANNEL(*this, chan_name));
+		return ;
+	}
+	chan_name.erase(chan_name.begin());
+	try
+	{
+		Channel	&chan = Server::getChannelManager().getChannel(chan_name);
+		std::string	comment = "get out";
+		if (params.size() > 3)
+			comment = params[2];
+		std::stringstream	nickname_ss(params[1]); // Not the 1939/45 thing
+		std::string			nickname;
+		while (std::getline(nickname_ss, nickname, ','))
+		{
+			if (nickname.empty())
+				continue ;
+			try
+			{
+				Client	*to_kick = Server::getClientManager().getClient(nickname);
+				if (to_kick == NULL)
+				{
+					// TODO check if its ignored or not
+					continue ;
+				}
+				chan.kick(this, to_kick, comment);
+			}
+			catch(ChannelManager::DoesNotExistException const& e)
+			{
+				sendCommand(CREATE_ERR_NOSUCHCHANNEL(*this, "#" + chan_name));
+			}
+			catch(Channel::NotRegisteredException const& e)
+			{
+				sendCommand(CREATE_ERR_NOTONCHANNEL(*this, "#" + chan_name));
+			}
+			catch(Channel::RequireOperException const& e)
+			{
+				sendCommand(CREATE_ERR_CHANOPRIVSNEEDED(*this, "#" + chan_name));
+			}
+			catch (Channel::NotInChannelException const& e)
+			{
+				sendCommand(CREATE_ERR_USERNOTINCHANNEL(*this, nickname, "#" + chan_name));
+			}
+		}
+	}
+	catch (ChannelManager::DoesNotExistException const& e)
+	{
+		sendCommand(CREATE_ERR_NOSUCHCHANNEL(*this, "#" + chan_name));
+	}
 }
 
 void	Client::execTOPIC(Command const& command)

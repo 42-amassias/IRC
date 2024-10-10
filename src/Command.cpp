@@ -6,7 +6,7 @@
 /*   By: ale-boud <ale-boud@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/06 15:10:43 by ale-boud          #+#    #+#             */
-/*   Updated: 2024/10/10 03:34:07 by ale-boud         ###   ########.fr       */
+/*   Updated: 2024/10/10 06:45:47 by ale-boud         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -96,6 +96,13 @@ Command::Command(
 	m_parameters(parameters)
 {
 }
+
+Command::Command(std::string const& prefix,
+				std::string const& command) :
+	m_prefix(prefix),
+	m_command(command),
+	m_parameters()
+{}
 
 Command::Command(
 		std::string const& prefix,

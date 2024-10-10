@@ -6,7 +6,7 @@
 /*   By: ale-boud <ale-boud@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/28 01:58:54 by amassias          #+#    #+#             */
-/*   Updated: 2024/10/10 05:33:57 by ale-boud         ###   ########.fr       */
+/*   Updated: 2024/10/10 07:08:30 by ale-boud         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -69,6 +69,8 @@ class Client
 		void		execTOPIC(Command const& command);
 		void		execMODE(Command const& command);
 		void		execINVITE(Command const& command);
+		void		execPART(Command const& command);
+		void		execKICK(Command const& command);
 
 	private:
 		std::string		m_nickname;
